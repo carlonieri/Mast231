@@ -7,6 +7,22 @@ const { getImapConfig, FOLDERS } = require('../config/imap');
 // SMTP: il vincolo "mai inviare email in autonomia" è quindi strutturale, non solo
 // applicativo — vedi docs/mast231_gestionale_spec.md, sezione "Vincoli duri".
 
+// Converte la Map di header di mailparser in un oggetto piano (chiavi già
+// minuscole). Gli header strutturati (from/to/date, già letti dall'envelope)
+// vengono ignorati; servono solo gli header scalari usati per riconoscere
+// bounce e risposte automatiche (content-type, auto-submitted, ecc.).
+function headersMapToObject(headersMap) {
+  const obj = {};
+  for (const [key, value] of headersMap) {
+    if (typeof value === 'string') {
+      obj[key] = value;
+    } else if (Array.isArray(value)) {
+      obj[key] = value.filter((v) => typeof v === 'string').join(', ');
+    }
+  }
+  return obj;
+}
+
 async function withClient(fn) {
   const client = new ImapFlow(getImapConfig());
   await client.connect();
@@ -30,15 +46,18 @@ async function readFolder(folderPath, { limit = 50 } = {}) {
       for await (const msg of client.fetch(`${start}:*`, { envelope: true, source: true })) {
         const parsed = await simpleParser(msg.source);
         const destinatariArray = (msg.envelope.to || []).map((a) => a.address).filter(Boolean);
+        const mittenteArray = (msg.envelope.from || []).map((a) => a.address).filter(Boolean);
         messages.push({
           uid: msg.uid,
           messageId: parsed.messageId || null,
           data: msg.envelope.date,
           oggetto: msg.envelope.subject,
-          mittente: (msg.envelope.from || []).map((a) => a.address).join(', '),
+          mittente: mittenteArray.join(', '),
+          mittenteArray,
           destinatari: destinatariArray.join(', '),
           destinatariArray,
           corpo: parsed.text ? parsed.text.trim() : '',
+          headers: headersMapToObject(parsed.headers),
         });
       }
 

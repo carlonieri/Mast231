@@ -2,13 +2,14 @@
 // documentazione (RFC 2606): non esistono davvero, nessun rischio di scrivere
 // a indirizzi reali.
 
-function buildRawMessage({ from, to, subject, date, body }) {
+function buildRawMessage({ from, to, subject, date, body, extraHeaders = {} }) {
   return [
     `From: ${from}`,
     `To: ${to}`,
     `Subject: ${subject}`,
     `Date: ${date.toUTCString()}`,
     `Message-ID: <${Date.now()}.${Math.random().toString(36).slice(2)}@test.mast231.local>`,
+    ...Object.entries(extraHeaders).map(([key, value]) => `${key}: ${value}`),
     'Content-Type: text/plain; charset=utf-8',
     '',
     body,
@@ -70,6 +71,33 @@ const inboxFixtures = [
     subject: 'Informazioni',
     body: 'Buongiorno, ho ricevuto la vostra email. Potreste dirmi qualcosa in più sui vostri servizi?',
     daysAgo: 2,
+  },
+  // Risposta automatica di assenza (fuori sede) — non è una vera risposta del
+  // destinatario e non deve essere classificata come interessato/non interessato.
+  {
+    from: 'avvocato.gialli@example.org',
+    to: 'ufficio@mast-test.local',
+    subject: 'Risposta automatica: Servizi di consulenza antiriciclaggio D.Lgs 231/2007',
+    body: 'Sono attualmente fuori sede fino al 30 del mese. Per urgenze contattare lo studio al numero indicato in firma.',
+    extraHeaders: { 'Auto-Submitted': 'auto-replied' },
+    daysAgo: 3,
+  },
+  // Bounce (mancato recapito) — l'indirizzo non esiste più o è errato: il
+  // mittente è il server di posta, non il contatto, e va correlato al lead
+  // tramite l'indirizzo riportato nel corpo/header del messaggio di errore.
+  {
+    from: 'mailer-daemon@example.com',
+    to: 'ufficio@mast-test.local',
+    subject: 'Undelivered Mail Returned to Sender',
+    body: [
+      'Il messaggio non è stato recapitato al seguente destinatario:',
+      '',
+      'studio.conti@example.com',
+      '',
+      'Motivo: indirizzo email non valido (550 5.1.1 user unknown).',
+    ].join('\r\n'),
+    extraHeaders: { 'X-Failed-Recipients': 'studio.conti@example.com' },
+    daysAgo: 1,
   },
 ];
 

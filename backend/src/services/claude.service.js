@@ -53,4 +53,53 @@ async function categorizeSentEmail({ oggetto, corpo }) {
   return parsed.categoria;
 }
 
-module.exports = { categorizeSentEmail };
+const REPLY_CLASSIFICATION_SCHEMA = {
+  type: 'object',
+  properties: {
+    classificazione: {
+      type: 'string',
+      enum: ['interessato', 'non_interessato', 'rimozione', 'ambiguo'],
+      description: 'Categoria della risposta secondo le 4 classi definite dalla specifica.',
+    },
+  },
+  required: ['classificazione'],
+  additionalProperties: false,
+};
+
+const REPLY_SYSTEM_PROMPT = [
+  'Sei un assistente che classifica le risposte ricevute da prospect contattati da Mast Srls,',
+  'società di consulenza compliance (antiriciclaggio, GDPR, whistleblowing). Classifica la risposta',
+  'in una di queste 4 categorie, senza eccezioni:',
+  '- interessato: il mittente mostra interesse, ad esempio chiede un preventivo, maggiori informazioni o un appuntamento.',
+  '- non_interessato: il mittente dichiara esplicitamente di non essere interessato o di avere già un fornitore.',
+  '- rimozione: il mittente chiede esplicitamente di essere rimosso dalla lista o di non essere più contattato.',
+  '- ambiguo: la risposta non permette di capire chiaramente se il mittente sia interessato o meno.',
+  "Questo testo è già stato filtrato a monte: non è un bounce né una risposta automatica di assenza,",
+  'è una risposta scritta da una persona.',
+].join(' ');
+
+// Classifica una risposta umana (già esclusi bounce e auto-reply a monte) in
+// una delle 4 categorie della spec. Vedi docs/mast231_gestionale_spec.md,
+// requisito funzionale #4.
+async function classifyReply({ oggetto, corpo }) {
+  const response = await getClient().messages.create({
+    model: 'claude-opus-4-8',
+    max_tokens: 256,
+    system: REPLY_SYSTEM_PROMPT,
+    output_config: {
+      format: { type: 'json_schema', schema: REPLY_CLASSIFICATION_SCHEMA },
+    },
+    messages: [
+      {
+        role: 'user',
+        content: `Oggetto: ${oggetto || '(nessun oggetto)'}\n\nTesto:\n${corpo || '(vuoto)'}`,
+      },
+    ],
+  });
+
+  const textBlock = response.content.find((block) => block.type === 'text');
+  const parsed = JSON.parse(textBlock.text);
+  return parsed.classificazione;
+}
+
+module.exports = { categorizeSentEmail, classifyReply };

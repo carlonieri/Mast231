@@ -87,6 +87,20 @@ il lead corrispondente. Rieseguibile senza duplicare eventi già loggati.
 npm run job:log-sent
 ```
 
+### Rilevamento risposte + classificazione via Claude
+
+Legge "Posta in Arrivo" via IMAP, correla ogni messaggio a un lead tracciato,
+riconosce bounce (mancato recapito) e risposte automatiche di assenza — non
+sono vere risposte, quindi non toccano lo stato del lead — e classifica le
+risposte umane con Claude in interessato / non interessato / rimozione /
+ambiguo, applicando il routing corrispondente (per "rimozione", l'unica azione
+autonoma prevista dalla spec: il lead viene cancellato e l'indirizzo escluso
+in modo permanente). Rieseguibile senza duplicare eventi già loggati.
+
+```bash
+npm run job:log-replies
+```
+
 ## Setup — Frontend
 
 ```bash
