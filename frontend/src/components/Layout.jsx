@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { getFollowUp } from '../api/client';
+import AssistenteChat from './AssistenteChat';
 
 const SEZIONI = [
   { path: '/acquisiti', label: 'Acquisiti' },
@@ -46,6 +47,7 @@ function Layout() {
       <main className="app-main">
         <Outlet />
       </main>
+      <AssistenteChat />
     </div>
   );
 }

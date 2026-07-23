@@ -8,6 +8,7 @@ router.use('/esclusioni', require('./esclusioni.routes'));
 router.use('/caricamenti', require('./caricamenti.routes'));
 router.use('/gruppi-export-richiamo', require('./gruppi-export-richiamo.routes'));
 router.use('/dashboard', require('./dashboard.routes'));
+router.use('/assistente', require('./assistente.routes'));
 router.use('/auth', require('./auth.routes'));
 
 module.exports = router;

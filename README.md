@@ -138,6 +138,15 @@ progetto oltre alla lettura — mai un invio) con i destinatari già inseriti ne
 campo A: oggetto e corpo restano vuoti, il testo resta sempre dell'operatore.
 `GET /api/caricamenti` restituisce lo storico degli ultimi caricamenti.
 
+### Assistente in-app
+
+`POST /api/assistente/chat` (`{ messaggi: [{ ruolo: 'operatore'|'assistente', testo }] }`,
+nessuna persistenza lato server: il frontend invia l'intera cronologia a ogni
+richiesta) risponde a domande su come usare il gestionale (dove trovo X, come
+faccio Y). Non esegue azioni al posto dell'operatore, né nell'app né su
+Outlook: nessun tool a disposizione, solo testo. Widget di chat sempre visibile
+in basso a destra in ogni pagina del frontend.
+
 ## Setup — Frontend
 
 ```bash

@@ -67,3 +67,10 @@ export function markFollowUpDone(id) {
 export function getDashboard() {
   return request('/api/dashboard');
 }
+
+export function chiediAssistente(messaggi) {
+  return request('/api/assistente/chat', {
+    method: 'POST',
+    body: JSON.stringify({ messaggi }),
+  });
+}
