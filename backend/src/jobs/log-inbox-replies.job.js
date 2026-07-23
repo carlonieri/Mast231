@@ -8,6 +8,7 @@ const {
   applyReplyClassification,
   removeLeadForOptOut,
 } = require('../services/leads.service');
+const { createFollowUp } = require('../services/follow-up.service');
 const { getPool } = require('../config/db');
 
 // Rilevamento risposte + classificazione via Claude + routing.
@@ -95,6 +96,16 @@ async function processMessage(message) {
     data: message.data,
     categoria: classificazione,
   });
+
+  if (classificazione === 'interessato') {
+    // "Interessato" richiede sempre un contatto umano (mai una risposta
+    // automatica): crea il task da evadere per l'operatore.
+    await createFollowUp({
+      leadId: lead.id,
+      motivo: `Lead interessato — contattare (oggetto: "${message.oggetto}")`,
+      dataSuggerita: new Date(),
+    });
+  }
 
   return classificazione;
 }

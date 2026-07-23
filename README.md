@@ -95,10 +95,25 @@ sono vere risposte, quindi non toccano lo stato del lead — e classifica le
 risposte umane con Claude in interessato / non interessato / rimozione /
 ambiguo, applicando il routing corrispondente (per "rimozione", l'unica azione
 autonoma prevista dalla spec: il lead viene cancellato e l'indirizzo escluso
-in modo permanente). Rieseguibile senza duplicare eventi già loggati.
+in modo permanente). Se "interessato", crea un task da evadere in `follow_up`
+(non esiste ancora un sistema di utenti/assegnazione: il task non è assegnato
+a una persona specifica, resta da evadere per chiunque operi sul gestionale).
+Rieseguibile senza duplicare eventi già loggati.
 
 ```bash
 npm run job:log-replies
+```
+
+### Lead senza risposta (richiamo suggerito)
+
+Job separato e indipendente dalla classificazione delle risposte, da eseguire
+periodicamente (es. una volta al giorno): sposta in "senza risposta" i lead
+`contattato` la cui ultima email risale a più di `FOLLOWUP_DAYS_THRESHOLD`
+giorni fa (default 7, configurabile in `.env`) e crea un task di richiamo in
+`follow_up`. Non invia nulla: il richiamo resta un'azione manuale. Idempotente.
+
+```bash
+npm run job:flag-no-response
 ```
 
 ## Setup — Frontend

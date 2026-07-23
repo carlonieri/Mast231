@@ -11,7 +11,8 @@
     "imap:seed": "node scripts/seed-test-mailbox.js",
     "imap:read": "node scripts/read-test-mailbox.js",
     "job:log-sent": "node src/jobs/log-sent-emails.job.js",
-    "job:log-replies": "node src/jobs/log-inbox-replies.job.js"
+    "job:log-replies": "node src/jobs/log-inbox-replies.job.js",
+    "job:flag-no-response": "node src/jobs/flag-no-response-leads.job.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.113.0",
