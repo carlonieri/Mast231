@@ -9,16 +9,19 @@
     "start": "node src/index.js",
     "test": "echo \"Nessun test ancora configurato\" && exit 0",
     "imap:seed": "node scripts/seed-test-mailbox.js",
-    "imap:read": "node scripts/read-test-mailbox.js"
+    "imap:read": "node scripts/read-test-mailbox.js",
+    "job:log-sent": "node src/jobs/log-sent-emails.job.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.113.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "imapflow": "^1.5.0",
     "mailparser": "^3.9.14",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
     "nodemailer": "^9.0.3",

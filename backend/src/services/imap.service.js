@@ -29,12 +29,15 @@ async function readFolder(folderPath, { limit = 50 } = {}) {
 
       for await (const msg of client.fetch(`${start}:*`, { envelope: true, source: true })) {
         const parsed = await simpleParser(msg.source);
+        const destinatariArray = (msg.envelope.to || []).map((a) => a.address).filter(Boolean);
         messages.push({
           uid: msg.uid,
+          messageId: parsed.messageId || null,
           data: msg.envelope.date,
           oggetto: msg.envelope.subject,
           mittente: (msg.envelope.from || []).map((a) => a.address).join(', '),
-          destinatari: (msg.envelope.to || []).map((a) => a.address).join(', '),
+          destinatari: destinatariArray.join(', '),
+          destinatariArray,
           corpo: parsed.text ? parsed.text.trim() : '',
         });
       }

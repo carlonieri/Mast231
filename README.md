@@ -77,6 +77,16 @@ npm run imap:seed   # crea una casella di test e la popola con alcune email fint
 npm run imap:read   # legge Posta Inviata e Posta in Arrivo e stampa i risultati
 ```
 
+### Log automatico delle email inviate + categorizzazione via Claude
+
+Legge "Posta Inviata" via IMAP, categorizza ogni email con Claude (`ANTHROPIC_API_KEY`
+in `.env`) e la registra su Postgres (`DATABASE_URL` in `.env`), creando/aggiornando
+il lead corrispondente. Rieseguibile senza duplicare eventi già loggati.
+
+```bash
+npm run job:log-sent
+```
+
 ## Setup — Frontend
 
 ```bash

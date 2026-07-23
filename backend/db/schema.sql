@@ -36,6 +36,7 @@ CREATE TABLE email_events (
   oggetto TEXT,
   categoria TEXT,                -- assegnata da Claude
   fonte TEXT NOT NULL CHECK (fonte IN ('sent_items', 'inbox')),
+  message_id TEXT,               -- header Message-ID IMAP, per evitare doppioni sui poll successivi
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -76,6 +77,12 @@ CREATE UNIQUE INDEX idx_leads_email ON leads(email);
 CREATE UNIQUE INDEX idx_esclusioni_email ON esclusioni(email);
 CREATE INDEX idx_leads_stato ON leads(stato);
 CREATE INDEX idx_email_events_lead_data ON email_events(lead_id, data);
+
+-- Un messaggio inviato a più destinatari genera più righe (una per lead): la
+-- chiave di deduplicazione è quindi la coppia (message_id, lead_id), non
+-- message_id da solo. Permette al job di polling di girare ripetutamente
+-- senza duplicare eventi già loggati (ON CONFLICT DO NOTHING).
+CREATE UNIQUE INDEX idx_email_events_message_lead ON email_events(message_id, lead_id);
 
 -- Nota: l'archiviazione periodica degli eventi più vecchi di ~12 mesi su lead
 -- chiusi/esclusi (in tabella di archivio separata) è prevista dalla spec ma non
