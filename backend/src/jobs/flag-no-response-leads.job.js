@@ -14,7 +14,7 @@ const { createFollowUp } = require('../services/follow-up.service');
 const DEFAULT_SOGLIA_GIORNI = 7;
 
 async function runFlagNoResponseLeadsJob({ soglia } = {}) {
-  const soglianGiorni = soglia ?? Number(process.env.FOLLOWUP_DAYS_THRESHOLD) || DEFAULT_SOGLIA_GIORNI;
+  const soglianGiorni = soglia ?? (Number(process.env.FOLLOWUP_DAYS_THRESHOLD) || DEFAULT_SOGLIA_GIORNI);
 
   // Solo i lead "contattato" (in attesa di risposta) la cui ultima email
   // risale a più della soglia: chi è già interessato/non_interessato/escluso
