@@ -17,6 +17,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.use('/api', require('./routes'));
+
 app.listen(PORT, () => {
   console.log(`Backend in ascolto sulla porta ${PORT}`);
 });
