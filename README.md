@@ -65,6 +65,18 @@ Verifica che sia su con:
 curl http://localhost:3000/health
 ```
 
+### Testare il collegamento IMAP senza toccare la casella del cliente
+
+Per sviluppare/testare in locale la lettura di Posta Inviata/Arrivo senza usare le
+credenziali reali di Aruba, il backend include due script che lavorano su una casella
+di test usa-e-getta (Ethereal, servizio pubblico per test — non consegna email reali):
+
+```bash
+npm run imap:seed   # crea una casella di test e la popola con alcune email finte
+# copia le credenziali stampate in output dentro backend/.env
+npm run imap:read   # legge Posta Inviata e Posta in Arrivo e stampa i risultati
+```
+
 ## Setup — Frontend
 
 ```bash
