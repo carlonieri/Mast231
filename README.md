@@ -139,7 +139,25 @@ cp .env.example .env
 npm run dev
 ```
 
-L'app parte su `http://localhost:5173`.
+L'app parte su `http://localhost:5173` e richiede il backend attivo su `http://localhost:3000`
+(`VITE_API_BASE_URL` in `frontend/.env`).
+
+### Sezioni del gestionale
+
+- **Acquisiti / In acquisizione / Interessati / Senza risposta / Esclusi** — le 5 sezioni
+  della spec (requisito #6), ciascuna filtrabile per città/regione (requisito #7) e con
+  export Excel. Nota: `leads.stato` non ha una casella 1:1 per ognuna delle 5 sezioni —
+  "In acquisizione" raggruppa `da_contattare`+`contattato`, "Acquisiti" usa un nuovo stato
+  `acquisito` impostabile solo a mano (nessun segnale email lo rileva automaticamente),
+  "Esclusi" legge dalla tabella `esclusioni` (i lead con richiesta di rimozione vengono
+  cancellati, non marcati). Aggiunta anche una sesta vista **Non interessati**, non elencata
+  esplicitamente tra le 5 ma necessaria per non nascondere quei contatti.
+- **Dettaglio contatto** (`/contatti/:id`) — storico email completo, richiami collegati,
+  avviso anti-duplicazione (requisito #2) se l'ultimo contatto risale a meno di 7 giorni,
+  cambio stato manuale.
+- **Dashboard** (`/dashboard`) — andamento mensile con grafico + tabella dati.
+- **Richiami** (`/richiami`) — task da evadere (`follow_up`), con l'indicatore dei richiami
+  del giorno sempre visibile nella barra di navigazione.
 
 ## Variabili d'ambiente
 

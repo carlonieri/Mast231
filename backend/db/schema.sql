@@ -20,8 +20,12 @@ CREATE TABLE leads (
   nome TEXT,
   citta TEXT,
   regione TEXT,
+  -- 'acquisito' non è raggiunto da nessun automatismo: nessun segnale email
+  -- indica che un prospect è diventato cliente pagante, quindi è impostato a
+  -- mano da un operatore (PATCH /api/leads/:id) — vedi sezione "Clienti già
+  -- acquisiti" del gestionale (spec, requisito funzionale #6).
   stato TEXT NOT NULL DEFAULT 'da_contattare'
-    CHECK (stato IN ('da_contattare', 'contattato', 'interessato', 'non_interessato', 'senza_risposta', 'escluso')),
+    CHECK (stato IN ('da_contattare', 'contattato', 'interessato', 'non_interessato', 'senza_risposta', 'escluso', 'acquisito')),
   ultima_categoria_email TEXT,
   ultima_data_contatto TIMESTAMPTZ,
   caricamento_id INTEGER REFERENCES caricamenti(id),

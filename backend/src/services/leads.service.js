@@ -70,9 +70,105 @@ async function removeLeadForOptOut({ email, motivo }) {
   }
 }
 
+// Lista lead filtrabile per stato (uno o più, per raggruppare più stato in
+// un'unica sezione del gestionale — es. "in acquisizione" = da_contattare +
+// contattato), città e regione. Vedi spec, requisiti funzionali #6 e #7.
+async function listLeads({ stati, citta, regione } = {}) {
+  const condizioni = [];
+  const parametri = [];
+
+  if (stati && stati.length > 0) {
+    const placeholders = stati.map((_, i) => `$${parametri.length + i + 1}`).join(', ');
+    condizioni.push(`stato IN (${placeholders})`);
+    parametri.push(...stati);
+  }
+  if (citta) {
+    parametri.push(citta);
+    condizioni.push(`citta = $${parametri.length}`);
+  }
+  if (regione) {
+    parametri.push(regione);
+    condizioni.push(`regione = $${parametri.length}`);
+  }
+
+  const whereClause = condizioni.length > 0 ? `WHERE ${condizioni.join(' AND ')}` : '';
+  const result = await getPool().query(
+    `SELECT id, email, nome, citta, regione, stato, ultima_categoria_email, ultima_data_contatto, created_at
+     FROM leads
+     ${whereClause}
+     ORDER BY ultima_data_contatto DESC NULLS LAST, created_at DESC`,
+    parametri
+  );
+  return result.rows;
+}
+
+// Città/regione distinte tra i lead esistenti, per popolare i filtri —
+// indipendenti dai filtri correnti, così le opzioni non si restringono da sole.
+async function getFilterOptions() {
+  const result = await getPool().query(
+    `SELECT DISTINCT citta, regione FROM leads WHERE citta IS NOT NULL OR regione IS NOT NULL`
+  );
+  const citta = [...new Set(result.rows.map((r) => r.citta).filter(Boolean))].sort();
+  const regione = [...new Set(result.rows.map((r) => r.regione).filter(Boolean))].sort();
+  return { citta, regione };
+}
+
+// Dettaglio contatto: lead + storico email completo (email_events) + richiami
+// collegati (follow_up). Vedi spec, requisito funzionale #2 (avviso
+// anti-duplicazione: ultima_categoria_email/ultima_data_contatto sul lead) e
+// checklist punto 7 ("vista dettaglio contatto con storico email").
+async function getLeadDetail(id) {
+  const leadResult = await getPool().query('SELECT * FROM leads WHERE id = $1', [id]);
+  const lead = leadResult.rows[0];
+  if (!lead) return null;
+
+  const storicoResult = await getPool().query(
+    `SELECT id, direzione, data, oggetto, categoria, fonte, created_at
+     FROM email_events WHERE lead_id = $1 ORDER BY data DESC`,
+    [id]
+  );
+  const richiamiResult = await getPool().query(
+    `SELECT id, data_suggerita, motivo, stato, created_at
+     FROM follow_up WHERE lead_id = $1 ORDER BY data_suggerita DESC NULLS LAST, created_at DESC`,
+    [id]
+  );
+
+  return { ...lead, storico: storicoResult.rows, richiami: richiamiResult.rows };
+}
+
+const STATI_VALIDI = [
+  'da_contattare',
+  'contattato',
+  'interessato',
+  'non_interessato',
+  'senza_risposta',
+  'escluso',
+  'acquisito',
+];
+
+// Aggiornamento manuale dello stato da parte di un operatore (es. segnare un
+// lead come "acquisito" — nessun segnale email lo indica automaticamente).
+async function updateLeadStato(id, stato) {
+  if (!STATI_VALIDI.includes(stato)) {
+    const err = new Error(`Stato non valido: ${stato}`);
+    err.statusCode = 400;
+    throw err;
+  }
+  const result = await getPool().query(
+    `UPDATE leads SET stato = $1, updated_at = now() WHERE id = $2 RETURNING *`,
+    [stato, id]
+  );
+  return result.rows[0] || null;
+}
+
 module.exports = {
   upsertLeadForSentEmail,
   findLeadByEmail,
   applyReplyClassification,
   removeLeadForOptOut,
+  listLeads,
+  getFilterOptions,
+  getLeadDetail,
+  updateLeadStato,
+  STATI_VALIDI,
 };
