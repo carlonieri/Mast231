@@ -30,10 +30,13 @@ const SYSTEM_PROMPT = [
   'di cosa trattava un invio senza doverlo rileggere.',
 ].join(' ');
 
-// Categorizza un'email inviata (oggetto + corpo) restituendo un'etichetta sintetica.
-// Vedi docs/mast231_gestionale_spec.md, requisito funzionale #1.
-async function categorizeSentEmail({ oggetto, corpo }) {
-  const response = await getClient().messages.create({
+// Costruisce i parametri della richiesta di categorizzazione di un'email
+// inviata. Non è urgente (a differenza della classificazione delle risposte,
+// che alimenta il routing in tempo reale) — vedi submitCategorizeSentEmailBatch:
+// questi parametri vengono passati alla Batch API di Claude (~50% di risparmio
+// rispetto a una chiamata diretta), mai eseguiti in tempo reale.
+function buildCategorizeSentEmailParams({ oggetto, corpo }) {
+  return {
     model: 'claude-opus-4-8',
     max_tokens: 256,
     system: SYSTEM_PROMPT,
@@ -46,11 +49,44 @@ async function categorizeSentEmail({ oggetto, corpo }) {
         content: `Oggetto: ${oggetto || '(nessun oggetto)'}\n\nTesto:\n${corpo || '(vuoto)'}`,
       },
     ],
-  });
+  };
+}
 
-  const textBlock = response.content.find((block) => block.type === 'text');
+// Estrae la categoria da una Message — funziona sia su una risposta diretta
+// sia sul campo .result.message di un risultato della Batch API, che ha la
+// stessa forma.
+function parseCategorizeSentEmailResult(message) {
+  const textBlock = message.content.find((block) => block.type === 'text');
   const parsed = JSON.parse(textBlock.text);
   return parsed.categoria;
+}
+
+// Invia un batch di richieste di categorizzazione non urgenti. Ogni voce ha
+// un customId univoco (generato dal chiamante, es. crypto.randomUUID())
+// usato come custom_id della richiesta, per poter poi riassociare ogni
+// risultato al messaggio email corrispondente.
+async function submitCategorizeSentEmailBatch(voci) {
+  return getClient().messages.batches.create({
+    requests: voci.map((voce) => ({
+      custom_id: voce.customId,
+      params: buildCategorizeSentEmailParams({ oggetto: voce.oggetto, corpo: voce.corpo }),
+    })),
+  });
+}
+
+async function retrieveBatchStatus(batchId) {
+  return getClient().messages.batches.retrieve(batchId);
+}
+
+// Itera tutti i risultati di un batch completato e li raccoglie in un array
+// (i batch di questo progetto restano di dimensioni contenute — un giorno di
+// invii per città/regione — quindi non serve un elaborazione a streaming).
+async function retrieveBatchResults(batchId) {
+  const risultati = [];
+  for await (const risultato of await getClient().messages.batches.results(batchId)) {
+    risultati.push(risultato);
+  }
+  return risultati;
 }
 
 const REPLY_CLASSIFICATION_SCHEMA = {
@@ -79,8 +115,9 @@ const REPLY_SYSTEM_PROMPT = [
 ].join(' ');
 
 // Classifica una risposta umana (già esclusi bounce e auto-reply a monte) in
-// una delle 4 categorie della spec. Vedi docs/mast231_gestionale_spec.md,
-// requisito funzionale #4.
+// una delle 4 categorie della spec. Resta SEMPRE in tempo reale (non passa
+// dalla Batch API): alimenta il routing immediato di interessato/rimozione.
+// Vedi docs/mast231_gestionale_spec.md, requisito funzionale #4.
 async function classifyReply({ oggetto, corpo }) {
   const response = await getClient().messages.create({
     model: 'claude-opus-4-8',
@@ -102,4 +139,11 @@ async function classifyReply({ oggetto, corpo }) {
   return parsed.classificazione;
 }
 
-module.exports = { categorizeSentEmail, classifyReply };
+module.exports = {
+  buildCategorizeSentEmailParams,
+  parseCategorizeSentEmailResult,
+  submitCategorizeSentEmailBatch,
+  retrieveBatchStatus,
+  retrieveBatchResults,
+  classifyReply,
+};

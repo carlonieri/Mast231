@@ -77,15 +77,23 @@ npm run imap:seed   # crea una casella di test e la popola con alcune email fint
 npm run imap:read   # legge Posta Inviata e Posta in Arrivo e stampa i risultati
 ```
 
-### Log automatico delle email inviate + categorizzazione via Claude
+### Log automatico delle email inviate + categorizzazione via Claude (Batch API)
 
-Legge "Posta Inviata" via IMAP, categorizza ogni email con Claude (`ANTHROPIC_API_KEY`
-in `.env`) e la registra su Postgres (`DATABASE_URL` in `.env`), creando/aggiornando
-il lead corrispondente. Rieseguibile senza duplicare eventi già loggati.
+Pipeline a due fasi. La categorizzazione delle email inviate non è urgente (a
+differenza della classificazione delle risposte, sotto, che resta in tempo
+reale) e passa dalla **Batch API** di Claude — ~50% più economica di una
+chiamata diretta — come ottimizzazione di costo.
 
 ```bash
-npm run job:log-sent
+npm run job:submit-sent-batch   # fase 1: legge Posta Inviata, registra subito
+                                 # lead+email_events (categoria in attesa) e invia
+                                 # le email nuove alla Batch API
+npm run job:apply-sent-batch    # fase 2: controlla i batch in attesa e applica la
+                                 # categoria quando pronta (fino a 24 ore) — rieseguire
+                                 # periodicamente finché non risulta più nulla "in corso"
 ```
+
+Entrambi rieseguibili senza duplicare eventi o reinviare messaggi già in coda.
 
 ### Rilevamento risposte + classificazione via Claude
 

@@ -47,6 +47,24 @@ async function applyReplyClassification({ leadId, classificazione, data, categor
   );
 }
 
+// Applica la categoria risolta in modo asincrono (via Batch API, vedi
+// submit/apply-sent-email-batch.job.js) a tutti i lead di un messaggio
+// inviato — ma solo se quel messaggio è ancora il loro contatto più recente:
+// un risultato di batch arrivato in ritardo (fino a 24 ore) non deve mai
+// sovrascrivere una categorizzazione più recente (es. un nuovo invio nel
+// frattempo).
+async function applyCategoriaForMessage({ messageId, categoria }) {
+  await getPool().query(
+    `UPDATE leads
+     SET ultima_categoria_email = $1, updated_at = now()
+     FROM email_events
+     WHERE email_events.message_id = $2
+       AND email_events.lead_id = leads.id
+       AND leads.ultima_data_contatto <= email_events.data`,
+    [categoria, messageId]
+  );
+}
+
 // Unica azione che il sistema può eseguire in autonomia (vedi spec, sezione
 // "Vincoli duri"): su richiesta di rimozione, registra l'esclusione (blocca
 // anche un futuro ricaricamento dello stesso indirizzo come lead) e cancella
@@ -165,6 +183,7 @@ module.exports = {
   upsertLeadForSentEmail,
   findLeadByEmail,
   applyReplyClassification,
+  applyCategoriaForMessage,
   removeLeadForOptOut,
   listLeads,
   getFilterOptions,

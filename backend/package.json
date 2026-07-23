@@ -10,7 +10,8 @@
     "test": "echo \"Nessun test ancora configurato\" && exit 0",
     "imap:seed": "node scripts/seed-test-mailbox.js",
     "imap:read": "node scripts/read-test-mailbox.js",
-    "job:log-sent": "node src/jobs/log-sent-emails.job.js",
+    "job:submit-sent-batch": "node src/jobs/submit-sent-email-batch.job.js",
+    "job:apply-sent-batch": "node src/jobs/apply-sent-email-batch.job.js",
     "job:log-replies": "node src/jobs/log-inbox-replies.job.js",
     "job:flag-no-response": "node src/jobs/flag-no-response-leads.job.js"
   },

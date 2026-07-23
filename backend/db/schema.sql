@@ -89,6 +89,26 @@ CREATE INDEX idx_email_events_lead_data ON email_events(lead_id, data);
 -- senza duplicare eventi già loggati (ON CONFLICT DO NOTHING).
 CREATE UNIQUE INDEX idx_email_events_message_lead ON email_events(message_id, lead_id);
 
+-- Traccia le richieste di categorizzazione delle email inviate inoltrate alla
+-- Batch API di Claude (non urgente: ~50% di risparmio rispetto alla chiamata
+-- in tempo reale). La classificazione delle risposte resta invece in tempo
+-- reale — non passa da questa tabella. Pipeline a due fasi:
+-- submit-sent-email-batch.job.js inserisce una riga per ogni messaggio
+-- inviato alla Batch API; apply-sent-email-batch.job.js la aggiorna quando
+-- il risultato è pronto (i batch possono richiedere fino a 24 ore).
+CREATE TABLE categorizzazioni_batch (
+  id SERIAL PRIMARY KEY,
+  custom_id TEXT NOT NULL,       -- custom_id della richiesta nel batch Claude
+  batch_id TEXT NOT NULL,        -- id del batch Claude (msgbatch_...)
+  message_id TEXT NOT NULL,      -- Message-ID IMAP del messaggio da categorizzare
+  stato TEXT NOT NULL DEFAULT 'in_attesa' CHECK (stato IN ('in_attesa', 'completato', 'errore')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completato_il TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX idx_categorizzazioni_batch_custom_id ON categorizzazioni_batch(custom_id);
+CREATE INDEX idx_categorizzazioni_batch_stato ON categorizzazioni_batch(stato);
+CREATE INDEX idx_categorizzazioni_batch_message_id ON categorizzazioni_batch(message_id);
+
 -- Nota: l'archiviazione periodica degli eventi più vecchi di ~12 mesi su lead
 -- chiusi/esclusi (in tabella di archivio separata) è prevista dalla spec ma non
 -- ancora implementata qui — vedi checklist punto 10.
