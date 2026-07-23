@@ -14,6 +14,7 @@ function getImapConfig() {
 const FOLDERS = {
   inbox: process.env.IMAP_INBOX_FOLDER || 'INBOX',
   sent: process.env.IMAP_SENT_FOLDER || 'Posta Inviata',
+  drafts: process.env.IMAP_DRAFTS_FOLDER || 'Bozze',
 };
 
 module.exports = { getImapConfig, FOLDERS };

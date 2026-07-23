@@ -116,6 +116,20 @@ giorni fa (default 7, configurabile in `.env`) e crea un task di richiamo in
 npm run job:flag-no-response
 ```
 
+### Carica lista giornaliera
+
+`POST /api/caricamenti` (multipart/form-data, campo `file`: .xlsx o .csv, campi
+opzionali `citta`/`regione` come default per le righe senza quei valori). Valida
+ogni riga (solo email obbligatoria), deduplica gli indirizzi ripetuti nel file,
+controlla ognuno contro la blacklist (`esclusioni`) e crea/aggiorna i lead
+puliti (`caricamenti.dettagli` registra il riepilogo completo: righe totali,
+non valide, duplicati, esclusi con motivo, puliti). Ogni 150 destinatari puliti
+(configurabile via `UPLOAD_BATCH_SIZE`) genera automaticamente una bozza email
+reale nella cartella Bozze della casella (via IMAP, unica scrittura del
+progetto oltre alla lettura — mai un invio) con i destinatari già inseriti nel
+campo A: oggetto e corpo restano vuoti, il testo resta sempre dell'operatore.
+`GET /api/caricamenti` restituisce lo storico degli ultimi caricamenti.
+
 ## Setup — Frontend
 
 ```bash

@@ -10,6 +10,7 @@ CREATE TABLE caricamenti (
   numero_record INTEGER,
   caricato_da TEXT,              -- operatore che ha effettuato il caricamento
   note TEXT,
+  dettagli JSONB,                -- riepilogo strutturato: validazione, dedup, blacklist, bozze generate
   data_caricamento TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
