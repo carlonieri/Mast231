@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Mast 231 — Mockup completo Template 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F4EDE3; --beige:#E4D8C9; --charcoal:#2E2B28; --charcoal-soft:#4A4640;
+    --coral:#F0A872; --yellow:#F2D35E; --teal:#6FAF9E; --line:#DCD0BE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Inter',sans-serif; color:var(--charcoal); background:var(--cream); line-height:1.6;}
+  h1,h2,h3{font-family:'Fraunces',serif; font-weight:400; color:var(--charcoal);}
+  .wrap{max-width:1140px; margin:0 auto; padding:0 40px;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  header{background:var(--cream); border-bottom:0.5px solid var(--line); position:sticky; top:0; z-index:10;}
+  nav{display:flex; align-items:center; justify-content:space-between; padding:22px 0;}
+  .logo{display:flex; align-items:center; gap:10px; font-family:'Fraunces',serif; font-size:18px;}
+  .nav-links{display:flex; gap:28px; font-size:12.5px; letter-spacing:0.6px; text-transform:uppercase;}
+  .nav-links button{background:none; border:none; font-family:'Inter',sans-serif; font-size:12.5px; letter-spacing:0.6px; text-transform:uppercase; color:var(--charcoal); cursor:pointer; padding:6px 0; border-bottom:2px solid transparent;}
+  .nav-links button.active{color:var(--coral); border-bottom:2px solid var(--coral);}
+  .nav-links button:hover{color:var(--coral);}
+
+  /* ---- shared bits ---- */
+  .eyebrow{font-size:12px; letter-spacing:1.6px; text-transform:uppercase; color:var(--teal); margin-bottom:16px;}
+  .btn{display:inline-block; background:var(--charcoal); color:var(--cream); border:none; padding:15px 32px; font-family:'Inter',sans-serif; font-size:13px; letter-spacing:0.8px; text-transform:uppercase; border-radius:2px; cursor:pointer; text-decoration:none;}
+  .btn:hover{opacity:0.9;}
+  .page-head{background:var(--beige); padding:64px 0; text-align:center;}
+  .page-head h1{font-size:36px; margin-bottom:16px;}
+  .page-head p{color:var(--charcoal-soft); max-width:520px; margin:0 auto; font-size:15px;}
+  .section-head{text-align:center; max-width:560px; margin:0 auto 56px;}
+  .section-head h2{font-size:30px; margin-bottom:16px;}
+  .section-head p{color:var(--charcoal-soft); font-size:15px;}
+
+  /* ---- home ---- */
+  .hero{background:var(--beige);}
+  .hero-inner{display:grid; grid-template-columns:1.05fr 0.95fr; align-items:center; gap:40px; padding:80px 0;}
+  .hero h1{font-size:42px; line-height:1.25; margin-bottom:22px; max-width:480px;}
+  .hero p.lede{font-size:16px; color:var(--charcoal-soft); max-width:420px; margin-bottom:32px;}
+  section.services{padding:96px 0;}
+  .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:28px;}
+  .card{background:#fff; border:0.5px solid var(--line); border-radius:8px; padding:36px 28px;}
+  .card .icon{width:44px; height:44px; margin-bottom:20px;}
+  .card h3{font-size:19px; margin-bottom:12px;}
+  .card p{font-size:14px; color:var(--charcoal-soft);}
+  section.why{background:var(--beige); padding:96px 0;}
+  .why-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:40px; text-align:center;}
+  .why-item .num{font-family:'Fraunces',serif; font-size:34px; color:var(--coral); margin-bottom:14px;}
+  .why-item h3{font-size:17px; margin-bottom:10px;}
+  .why-item p{font-size:14px; color:var(--charcoal-soft);}
+  section.cta{padding:96px 0; text-align:center;}
+  section.cta h2{font-size:32px; max-width:520px; margin:0 auto 30px;}
+
+  /* ---- chi siamo ---- */
+  section.intro{padding:96px 0;}
+  .intro-grid{display:grid; grid-template-columns:0.9fr 1.1fr; gap:56px; align-items:center;}
+  .intro-grid h2{font-size:28px; margin-bottom:22px;}
+  .intro-grid p{color:var(--charcoal-soft); font-size:15px; margin-bottom:16px; max-width:480px;}
+  section.team{background:var(--beige); padding:96px 0;}
+  .team-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:28px;}
+  .team-card{background:#fff; border:0.5px solid var(--line); border-radius:8px; padding:28px; text-align:center;}
+  .avatar{width:64px; height:64px; border-radius:50%; margin:0 auto 18px;}
+  .team-card h3{font-size:17px; margin-bottom:4px;}
+  .team-card .role{font-size:12.5px; color:var(--coral); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:14px;}
+  .team-card p{font-size:13.5px; color:var(--charcoal-soft);}
+  section.values{padding:96px 0;}
+  .values-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:28px; text-align:center;}
+  .value-item .icon{width:40px; height:40px; margin:0 auto 18px;}
+  .value-item h3{font-size:16px; margin-bottom:10px;}
+  .value-item p{font-size:13.5px; color:var(--charcoal-soft);}
+
+  /* ---- servizi ---- */
+  section.detail{padding:88px 0; border-bottom:0.5px solid var(--line);}
+  section.detail.alt{background:var(--beige); border-bottom:none;}
+  .detail-grid{display:grid; grid-template-columns:0.9fr 1.1fr; gap:56px; align-items:center;}
+  .detail-grid.reverse{grid-template-columns:1.1fr 0.9fr;}
+  .detail-grid.reverse .text{order:2;}
+  .detail-grid.reverse .icon-wrap{order:1;}
+  .num-tag{font-family:'Fraunces',serif; font-size:15px; color:var(--coral); margin-bottom:14px;}
+  .text h2{font-size:27px; margin-bottom:18px;}
+  .text p{color:var(--charcoal-soft); font-size:15px; margin-bottom:14px; max-width:460px;}
+  .check-list{list-style:none; margin-top:20px;}
+  .check-list li{font-size:14px; color:var(--charcoal-soft); margin-bottom:10px; padding-left:24px; position:relative;}
+  .check-list li:before{content:"✓"; position:absolute; left:0; color:var(--teal); font-weight:600;}
+  .icon-wrap{display:flex; align-items:center; justify-content:center;}
+  .icon-wrap svg{width:100%; max-width:280px; height:auto;}
+
+  /* ---- blog ---- */
+  section.featured{padding:80px 0 40px;}
+  .featured-card{display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; background:#fff; border:0.5px solid var(--line); border-radius:8px; overflow:hidden;}
+  .featured-img{background:var(--beige); min-height:280px; display:flex; align-items:center; justify-content:center;}
+  .featured-img svg{width:70%; height:auto;}
+  .featured-text{padding:40px;}
+  .tag{display:inline-block; font-size:11px; letter-spacing:0.6px; text-transform:uppercase; color:var(--coral); background:#FBF0E6; padding:5px 12px; border-radius:20px; margin-bottom:16px;}
+  .featured-text h2{font-size:24px; margin-bottom:14px;}
+  .featured-text p{color:var(--charcoal-soft); font-size:14.5px; margin-bottom:20px;}
+  .meta{font-size:12.5px; color:var(--charcoal-soft);}
+  section.grid-posts{padding:40px 0 96px;}
+  .posts-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:28px;}
+  .post-card{background:#fff; border:0.5px solid var(--line); border-radius:8px; overflow:hidden;}
+  .post-thumb{height:150px; background:var(--beige); display:flex; align-items:center; justify-content:center;}
+  .post-thumb svg{width:50%; height:auto;}
+  .post-body{padding:24px;}
+  .post-body .tag{margin-bottom:12px;}
+  .post-body h3{font-size:17px; margin-bottom:10px; line-height:1.4;}
+  .post-body p{font-size:13.5px; color:var(--charcoal-soft); margin-bottom:14px;}
+  .post-body .meta{font-size:12px;}
+  section.newsletter{background:var(--beige); padding:80px 0; text-align:center;}
+  section.newsletter h2{font-size:28px; margin-bottom:14px;}
+  section.newsletter p{color:var(--charcoal-soft); font-size:14.5px; margin-bottom:28px;}
+  .nl-form{display:flex; gap:12px; justify-content:center; max-width:420px; margin:0 auto;}
+  .nl-form input{flex:1; padding:13px 16px; border:0.5px solid var(--line); border-radius:2px; font-family:'Inter',sans-serif; font-size:14px;}
+
+  /* ---- contatti ---- */
+  section.contact{padding:88px 0;}
+  .contact-grid{display:grid; grid-template-columns:0.85fr 1.15fr; gap:56px;}
+  .info-block{margin-bottom:32px;}
+  .info-block h3{font-size:12px; letter-spacing:0.8px; text-transform:uppercase; color:var(--coral); margin-bottom:12px;}
+  .info-block p, .info-block a{font-size:15px; color:var(--charcoal); text-decoration:none; display:block; margin-bottom:4px;}
+  .form-card{background:#fff; border:0.5px solid var(--line); border-radius:8px; padding:40px;}
+  .form-row{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;}
+  .form-card label{display:block; font-size:12.5px; color:var(--charcoal-soft); margin-bottom:6px;}
+  .form-card input, .form-card textarea{width:100%; padding:12px 14px; border:0.5px solid var(--line); border-radius:2px; font-family:'Inter',sans-serif; font-size:14px; background:var(--cream);}
+  .form-card textarea{min-height:110px; resize:vertical; margin-bottom:20px;}
+  .full{grid-column:1 / -1; margin-bottom:16px;}
+  section.map{padding:0 0 96px;}
+  .map-block{background:var(--beige); border-radius:8px; height:280px; display:flex; align-items:center; justify-content:center;}
+  .map-block svg{width:80px; height:80px;}
+
+  /* ---- footer ---- */
+  footer{background:var(--charcoal); color:var(--cream); padding:56px 0 28px;}
+  .footer-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:32px; margin-bottom:40px;}
+  .footer-grid h4{font-size:12px; letter-spacing:0.8px; text-transform:uppercase; color:var(--coral); margin-bottom:16px; font-weight:600;}
+  .footer-grid p, .footer-grid a{font-size:13.5px; color:#C9C0B2; text-decoration:none; display:block; margin-bottom:8px; background:none; border:none; cursor:pointer; font-family:'Inter',sans-serif; text-align:left;}
+  .footer-bottom{border-top:0.5px solid #453F38; padding-top:22px; font-size:12px; color:#9B9186; display:flex; justify-content:space-between;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true">
+          <path d="M15 1 C22 1 28 6 28 14 C28 21 23 28 15 29 C7 28 2 21 2 14 C2 6 8 1 15 1 Z" fill="#F0A872"/>
+          <path d="M15 1 C22 1 28 6 28 14 C28 18 26 22 22 25 C18 20 12 20 8 25 C4 22 2 18 2 14 C2 6 8 1 15 1 Z" fill="#F2D35E" opacity="0.85"/>
+          <path d="M8 25 C12 20 18 20 22 25 C19 28 17 29 15 29 C13 29 11 28 8 25 Z" fill="#6FAF9E"/>
+        </svg>
+        Mast 231
+      </div>
+      <div class="nav-links">
+        <button data-page="home" class="active">Home</button>
+        <button data-page="chi-siamo">Chi siamo</button>
+        <button data-page="servizi">Servizi</button>
+        <button data-page="blog">Blog</button>
+        <button data-page="contatti">Contatti</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HOME ============ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <div class="eyebrow">Lorem ipsum dolor</div>
+        <h1>Lorem ipsum dolor sit amet, consectetur adipiscing elit</h1>
+        <p class="lede">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem.</p>
+        <a href="#" class="btn">Lorem ipsum</a>
+      </div>
+      <svg viewBox="0 0 380 380" style="width:100%; height:auto;" role="img" aria-label="Illustrazione">
+        <ellipse cx="190" cy="345" rx="140" ry="16" fill="#D8C9B4"/>
+        <path d="M190 40 C230 40 262 72 262 112 C262 130 256 146 246 158 L246 200 C246 208 240 214 232 214 L148 214 C140 214 134 208 134 200 L134 158 C124 146 118 130 118 112 C118 72 150 40 190 40 Z" fill="#F0A872" opacity="0.18"/>
+        <rect x="150" y="150" width="80" height="150" rx="10" fill="#2E2B28"/>
+        <circle cx="190" cy="112" r="34" fill="#D8B99A"/>
+        <path d="M156 112 C156 92 172 76 190 76 C208 76 224 92 224 112 C224 100 214 90 190 90 C166 90 156 100 156 112 Z" fill="#2E2B28"/>
+        <path d="M150 160 L112 190 L118 210 L150 190 Z" fill="#403A34"/>
+        <path d="M230 160 L268 190 L262 210 L230 190 Z" fill="#403A34"/>
+        <g transform="translate(96,190)">
+          <rect x="0" y="0" width="70" height="92" rx="4" fill="#FBF7F1" stroke="#C9BBA4" stroke-width="1.5"/>
+          <line x1="12" y1="20" x2="58" y2="20" stroke="#C9BBA4" stroke-width="2"/>
+          <line x1="12" y1="34" x2="58" y2="34" stroke="#C9BBA4" stroke-width="2"/>
+          <line x1="12" y1="48" x2="42" y2="48" stroke="#C9BBA4" stroke-width="2"/>
+          <path d="M14 66 L24 76 L46 54" fill="none" stroke="#6FAF9E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <g transform="translate(228,182)">
+          <path d="M25 0 C40 6 50 6 50 6 L50 45 C50 68 25 84 25 84 C25 84 0 68 0 45 L0 6 C0 6 10 6 25 0 Z" fill="#2E2B28"/>
+          <path d="M25 6 C36 11 44 11 44 11 L44 45 C44 63 25 76 25 76 C25 76 6 63 6 45 L6 11 C6 11 14 11 25 6 Z" fill="#F2D35E"/>
+          <path d="M17 40 L23 48 L35 30" fill="none" stroke="#2E2B28" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <circle cx="70" cy="90" r="7" fill="#6FAF9E" opacity="0.6"/>
+        <circle cx="310" cy="120" r="5" fill="#F0A872" opacity="0.6"/>
+        <circle cx="300" cy="70" r="4" fill="#F2D35E" opacity="0.7"/>
+      </svg>
+    </div>
+  </section>
+
+  <section class="services">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Lorem ipsum</div>
+        <h2>Lorem ipsum dolor sit amet consectetur</h2>
+        <p>Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.</p>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <svg class="icon" viewBox="0 0 44 44"><path d="M22 3 C31 3 38 9 38 17 C38 26 31 35 22 39 C13 35 6 26 6 17 C6 9 13 3 22 3 Z" fill="#F2D35E" opacity="0.9"/><path d="M15 21 L20 26 L30 14" fill="none" stroke="#2E2B28" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3>Lorem ipsum</h3>
+          <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit sed quia consequuntur.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" viewBox="0 0 44 44"><rect x="10" y="6" width="24" height="32" rx="3" fill="#F0A872" opacity="0.85"/><line x1="15" y1="15" x2="29" y2="15" stroke="#2E2B28" stroke-width="2"/><line x1="15" y1="21" x2="29" y2="21" stroke="#2E2B28" stroke-width="2"/><line x1="15" y1="27" x2="23" y2="27" stroke="#2E2B28" stroke-width="2"/></svg>
+          <h3>Lorem ipsum</h3>
+          <p>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet consectetur adipisci velit.</p>
+        </div>
+        <div class="card">
+          <svg class="icon" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="#6FAF9E" opacity="0.85"/><path d="M14 22 L20 28 L32 14" fill="none" stroke="#2E2B28" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3>Lorem ipsum</h3>
+          <p>Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="why">
+    <div class="wrap">
+      <div class="section-head"><h2>Lorem ipsum dolor sit amet</h2></div>
+      <div class="why-grid">
+        <div class="why-item"><div class="num">01</div><h3>Lorem ipsum</h3><p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis.</p></div>
+        <div class="why-item"><div class="num">02</div><h3>Lorem ipsum</h3><p>Et harum quidem rerum facilis est et expedita distinctio nam libero tempore.</p></div>
+        <div class="why-item"><div class="num">03</div><h3>Lorem ipsum</h3><p>Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <h2>Lorem ipsum dolor sit amet consectetur adipiscing</h2>
+      <a href="#" class="btn">Lorem ipsum</a>
+    </div>
+  </section>
+</div>
+
+<!-- ============ CHI SIAMO ============ -->
+<div class="page" id="page-chi-siamo">
+  <div class="page-head"><div class="wrap"><div class="eyebrow">Lorem ipsum</div><h1>Chi siamo</h1></div></div>
+
+  <section class="intro">
+    <div class="wrap intro-grid">
+      <svg viewBox="0 0 320 320" style="width:100%; height:auto;" role="img" aria-label="Illustrazione">
+        <ellipse cx="160" cy="300" rx="120" ry="14" fill="#D8C9B4"/>
+        <path d="M160 30 C196 30 224 58 224 92 C224 108 218 122 210 132 L210 168 C210 176 204 182 196 182 L124 182 C116 182 110 176 110 168 L110 132 C102 122 96 108 96 92 C96 58 124 30 160 30 Z" fill="#F0A872" opacity="0.15"/>
+        <rect x="126" y="126" width="68" height="126" rx="8" fill="#2E2B28"/>
+        <circle cx="160" cy="94" r="29" fill="#D8B99A"/>
+        <path d="M131 94 C131 78 144 64 160 64 C176 64 189 78 189 94 C189 84 180 76 160 76 C140 76 131 84 131 94 Z" fill="#2E2B28"/>
+        <g transform="translate(196,150)">
+          <path d="M21 0 C34 5 42 5 42 5 L42 38 C42 57 21 71 21 71 C21 71 0 57 0 38 L0 5 C0 5 8 5 21 0 Z" fill="#2E2B28"/>
+          <path d="M21 5 C30 9 37 9 37 9 L37 38 C37 53 21 64 21 64 C21 64 5 53 5 38 L5 9 C5 9 12 9 21 5 Z" fill="#F2D35E"/>
+          <path d="M14 34 L19 40 L29 25" fill="none" stroke="#2E2B28" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </svg>
+      <div>
+        <div class="eyebrow">Lorem ipsum</div>
+        <h2>Lorem ipsum dolor sit amet consectetur adipiscing</h2>
+        <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem aperiam eaque ipsa.</p>
+        <p>Quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo nemo enim ipsam voluptatem.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="team">
+    <div class="wrap">
+      <div class="section-head"><div class="eyebrow">Lorem ipsum</div><h2>Lorem ipsum dolor sit amet</h2><p>Ut enim ad minima veniam quis nostrum exercitationem ullam corporis suscipit laboriosam.</p></div>
+      <div class="team-grid">
+        <div class="team-card">
+          <svg class="avatar" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#D8B99A"/><circle cx="32" cy="26" r="12" fill="#2E2B28" opacity="0.85"/><path d="M12 58 C12 44 20 38 32 38 C44 38 52 44 52 58" fill="#2E2B28" opacity="0.85"/></svg>
+          <h3>Lorem Ipsum</h3><div class="role">Lorem ipsum</div>
+          <p>Dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt.</p>
+        </div>
+        <div class="team-card">
+          <svg class="avatar" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#C9A87F"/><circle cx="32" cy="26" r="12" fill="#2E2B28" opacity="0.85"/><path d="M12 58 C12 44 20 38 32 38 C44 38 52 44 52 58" fill="#2E2B28" opacity="0.85"/></svg>
+          <h3>Lorem Ipsum</h3><div class="role">Lorem ipsum</div>
+          <p>Ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrum.</p>
+        </div>
+        <div class="team-card">
+          <svg class="avatar" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#E0C4A0"/><circle cx="32" cy="26" r="12" fill="#2E2B28" opacity="0.85"/><path d="M12 58 C12 44 20 38 32 38 C44 38 52 44 52 58" fill="#2E2B28" opacity="0.85"/></svg>
+          <h3>Lorem Ipsum</h3><div class="role">Lorem ipsum</div>
+          <p>Exercitationem ullam corporis suscipit laboriosam nisi ut aliquid ex ea commodi.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="values">
+    <div class="wrap">
+      <div class="section-head"><div class="eyebrow">Lorem ipsum</div><h2>Lorem ipsum dolor sit amet</h2></div>
+      <div class="values-grid">
+        <div class="value-item"><svg class="icon" viewBox="0 0 40 40"><path d="M20 3 C29 3 35 9 35 16 C35 24 29 32 20 36 C11 32 5 24 5 16 C5 9 11 3 20 3 Z" fill="#F2D35E" opacity="0.9"/></svg><h3>Lorem ipsum</h3><p>Dolor sit amet consectetur.</p></div>
+        <div class="value-item"><svg class="icon" viewBox="0 0 40 40"><rect x="8" y="6" width="24" height="28" rx="3" fill="#F0A872" opacity="0.85"/></svg><h3>Lorem ipsum</h3><p>Adipiscing elit sed do eiusmod.</p></div>
+        <div class="value-item"><svg class="icon" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="#6FAF9E" opacity="0.85"/></svg><h3>Lorem ipsum</h3><p>Tempor incididunt ut labore.</p></div>
+        <div class="value-item"><svg class="icon" viewBox="0 0 40 40"><path d="M20 4 L36 12 L36 22 C36 30 29 36 20 38 C11 36 4 30 4 22 L4 12 Z" fill="#2E2B28" opacity="0.15"/><path d="M20 4 L36 12 L36 22 C36 30 29 36 20 38 C11 36 4 30 4 22 L4 12 Z" fill="none" stroke="#2E2B28" stroke-width="1.5"/></svg><h3>Lorem ipsum</h3><p>Et dolore magna aliqua.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" style="background:var(--beige);">
+    <div class="wrap"><h2>Lorem ipsum dolor sit amet consectetur adipiscing</h2><a href="#" class="btn" data-goto="contatti">Lorem ipsum</a></div>
+  </section>
+</div>
+
+<!-- ============ SERVIZI ============ -->
+<div class="page" id="page-servizi">
+  <div class="page-head"><div class="wrap"><div class="eyebrow">Lorem ipsum</div><h1>Servizi</h1><p>Ut enim ad minima veniam quis nostrum exercitationem ullam corporis suscipit laboriosam.</p></div></div>
+
+  <section class="detail">
+    <div class="wrap detail-grid">
+      <div class="text">
+        <div class="num-tag">01 — Lorem ipsum</div>
+        <h2>Lorem ipsum dolor sit amet</h2>
+        <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem.</p>
+        <ul class="check-list"><li>Lorem ipsum dolor sit amet consectetur</li><li>Adipiscing elit sed do eiusmod tempor</li><li>Incididunt ut labore et dolore magna</li></ul>
+      </div>
+      <div class="icon-wrap"><svg viewBox="0 0 200 200"><path d="M100 20 C130 20 155 42 155 68 C155 90 145 108 130 118 L130 155 C130 163 124 169 116 169 L84 169 C76 169 70 163 70 155 L70 118 C55 108 45 90 45 68 C45 42 70 20 100 20 Z" fill="#F2D35E" opacity="0.85"/><path d="M78 88 L94 104 L124 68" fill="none" stroke="#2E2B28" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+  </section>
+
+  <section class="detail alt">
+    <div class="wrap detail-grid reverse">
+      <div class="icon-wrap"><svg viewBox="0 0 200 200"><rect x="45" y="30" width="110" height="140" rx="10" fill="#F0A872" opacity="0.8"/><line x1="65" y1="65" x2="135" y2="65" stroke="#2E2B28" stroke-width="4"/><line x1="65" y1="88" x2="135" y2="88" stroke="#2E2B28" stroke-width="4"/><line x1="65" y1="111" x2="105" y2="111" stroke="#2E2B28" stroke-width="4"/></svg></div>
+      <div class="text">
+        <div class="num-tag">02 — Lorem ipsum</div>
+        <h2>Lorem ipsum dolor sit amet</h2>
+        <p>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet consectetur adipisci velit sed quia.</p>
+        <ul class="check-list"><li>Lorem ipsum dolor sit amet consectetur</li><li>Adipiscing elit sed do eiusmod tempor</li><li>Incididunt ut labore et dolore magna</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="detail">
+    <div class="wrap detail-grid">
+      <div class="text">
+        <div class="num-tag">03 — Lorem ipsum</div>
+        <h2>Lorem ipsum dolor sit amet</h2>
+        <p>Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur.</p>
+        <ul class="check-list"><li>Lorem ipsum dolor sit amet consectetur</li><li>Adipiscing elit sed do eiusmod tempor</li><li>Incididunt ut labore et dolore magna</li></ul>
+      </div>
+      <div class="icon-wrap"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="80" fill="#6FAF9E" opacity="0.8"/><path d="M65 100 L88 123 L138 68" fill="none" stroke="#2E2B28" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+  </section>
+
+  <section class="detail alt">
+    <div class="wrap detail-grid reverse">
+      <div class="icon-wrap"><svg viewBox="0 0 200 200"><path d="M100 20 L165 50 L165 100 C165 135 138 160 100 172 C62 160 35 135 35 100 L35 50 Z" fill="#2E2B28" opacity="0.12"/><path d="M100 20 L165 50 L165 100 C165 135 138 160 100 172 C62 160 35 135 35 100 L35 50 Z" fill="none" stroke="#2E2B28" stroke-width="3"/><path d="M75 100 L92 117 L128 78" fill="none" stroke="#F0A872" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="text">
+        <div class="num-tag">04 — Lorem ipsum</div>
+        <h2>Lorem ipsum dolor sit amet</h2>
+        <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum.</p>
+        <ul class="check-list"><li>Lorem ipsum dolor sit amet consectetur</li><li>Adipiscing elit sed do eiusmod tempor</li><li>Incididunt ut labore et dolore magna</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap"><h2>Lorem ipsum dolor sit amet consectetur adipiscing</h2><a href="#" class="btn" data-goto="contatti">Lorem ipsum</a></div>
+  </section>
+</div>
+
+<!-- ============ BLOG ============ -->
+<div class="page" id="page-blog">
+  <div class="page-head"><div class="wrap"><div class="eyebrow">Lorem ipsum</div><h1>Blog</h1></div></div>
+
+  <section class="featured">
+    <div class="wrap">
+      <div class="featured-card">
+        <div class="featured-img"><svg viewBox="0 0 160 160"><rect x="30" y="20" width="100" height="120" rx="6" fill="#F0A872" opacity="0.7"/><line x1="45" y1="50" x2="115" y2="50" stroke="#2E2B28" stroke-width="3"/><line x1="45" y1="66" x2="115" y2="66" stroke="#2E2B28" stroke-width="3"/><line x1="45" y1="82" x2="90" y2="82" stroke="#2E2B28" stroke-width="3"/></svg></div>
+        <div class="featured-text">
+          <span class="tag">Lorem ipsum</span>
+          <h2>Lorem ipsum dolor sit amet consectetur adipiscing elit</h2>
+          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium totam rem aperiam.</p>
+          <div class="meta">Lorem ipsum · 5 min di lettura</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid-posts">
+    <div class="wrap">
+      <div class="posts-grid">
+        <div class="post-card"><div class="post-thumb"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="#6FAF9E" opacity="0.7"/><path d="M32 50 L45 63 L70 35" fill="none" stroke="#2E2B28" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="post-body"><span class="tag">Lorem ipsum</span><h3>Lorem ipsum dolor sit amet consectetur</h3><p>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet.</p><div class="meta">30/05/2026</div></div></div>
+        <div class="post-card"><div class="post-thumb"><svg viewBox="0 0 100 100"><path d="M50 10 C65 10 77 20 77 35 C77 46 71 55 63 60 L63 80 C63 84 60 87 56 87 L44 87 C40 87 37 84 37 80 L37 60 C29 55 23 46 23 35 C23 20 35 10 50 10 Z" fill="#F2D35E" opacity="0.8"/></svg></div><div class="post-body"><span class="tag">Lorem ipsum</span><h3>Lorem ipsum dolor sit amet consectetur</h3><p>Ut enim ad minima veniam quis nostrum exercitationem ullam.</p><div class="meta">28/05/2026</div></div></div>
+        <div class="post-card"><div class="post-thumb"><svg viewBox="0 0 100 100"><rect x="20" y="15" width="60" height="70" rx="4" fill="#F0A872" opacity="0.7"/><line x1="32" y1="35" x2="68" y2="35" stroke="#2E2B28" stroke-width="3"/><line x1="32" y1="48" x2="68" y2="48" stroke="#2E2B28" stroke-width="3"/><line x1="32" y1="61" x2="52" y2="61" stroke="#2E2B28" stroke-width="3"/></svg></div><div class="post-body"><span class="tag">Lorem ipsum</span><h3>Lorem ipsum dolor sit amet consectetur</h3><p>At vero eos et accusamus et iusto odio dignissimos ducimus.</p><div class="meta">22/05/2026</div></div></div>
+        <div class="post-card"><div class="post-thumb"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="#2E2B28" opacity="0.15"/><circle cx="50" cy="50" r="38" fill="none" stroke="#2E2B28" stroke-width="2"/></svg></div><div class="post-body"><span class="tag">Lorem ipsum</span><h3>Lorem ipsum dolor sit amet consectetur</h3><p>Et harum quidem rerum facilis est et expedita distinctio.</p><div class="meta">18/05/2026</div></div></div>
+        <div class="post-card"><div class="post-thumb"><svg viewBox="0 0 100 100"><path d="M50 12 L84 30 L84 60 C84 78 68 90 50 96 C32 90 16 78 16 60 L16 30 Z" fill="#6FAF9E" opacity="0.7"/></svg></div><div class="post-body"><span class="tag">Lorem ipsum</span><h3>Lorem ipsum dolor sit amet consectetur</h3><p>Temporibus autem quibusdam et aut officiis debitis aut rerum.</p><div class="meta">10/05/2026</div></div></div>
+        <div class="post-card"><div class="post-thumb"><svg viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" rx="8" fill="#F2D35E" opacity="0.7"/></svg></div><div class="post-body"><span class="tag">Lorem ipsum</span><h3>Lorem ipsum dolor sit amet consectetur</h3><p>Itaque earum rerum hic tenetur a sapiente delectus ut aut.</p><div class="meta">02/05/2026</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="newsletter">
+    <div class="wrap">
+      <h2>Lorem ipsum dolor sit amet</h2>
+      <p>Consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore.</p>
+      <div class="nl-form"><input type="email" placeholder="Lorem ipsum"><a href="#" class="btn">Lorem ipsum</a></div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ CONTATTI ============ -->
+<div class="page" id="page-contatti">
+  <div class="page-head"><div class="wrap"><div class="eyebrow">Lorem ipsum</div><h1>Contatti</h1></div></div>
+
+  <section class="contact">
+    <div class="wrap contact-grid">
+      <div>
+        <div class="info-block"><h3>Lorem ipsum</h3><p>Via Lorem Ipsum, 10</p><p>00000 — Lorem Ipsum (XX)</p></div>
+        <div class="info-block"><h3>Lorem ipsum</h3><a href="#">+39 0000 000000</a><a href="#">info@loremipsum.it</a></div>
+        <div class="info-block"><h3>Lorem ipsum</h3><p>Lunedì – Venerdì</p><p>9:00 – 18:00</p></div>
+      </div>
+      <div class="form-card">
+        <div class="form-row">
+          <div><label>Lorem ipsum</label><input type="text" placeholder="Lorem ipsum"></div>
+          <div><label>Lorem ipsum</label><input type="text" placeholder="Lorem ipsum"></div>
+        </div>
+        <div class="full"><label>Lorem ipsum</label><input type="email" placeholder="Lorem ipsum"></div>
+        <div class="full"><label>Lorem ipsum</label><textarea placeholder="Lorem ipsum dolor sit amet consectetur"></textarea></div>
+        <button class="btn">Lorem ipsum</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="map">
+    <div class="wrap"><div class="map-block"><svg viewBox="0 0 80 80"><path d="M40 6 C56 6 68 18 68 32 C68 52 40 74 40 74 C40 74 12 52 12 32 C12 18 24 6 40 6 Z" fill="#2E2B28" opacity="0.2"/><circle cx="40" cy="32" r="12" fill="#2E2B28" opacity="0.4"/></svg></div></div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h4>Mast 231</h4>
+        <p style="color:#C9C0B2; max-width:220px;">Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.</p>
+      </div>
+      <div>
+        <h4>Servizi</h4>
+        <button data-goto="servizi">Lorem ipsum</button>
+        <button data-goto="servizi">Lorem ipsum</button>
+        <button data-goto="servizi">Lorem ipsum</button>
+        <button data-goto="servizi">Lorem ipsum</button>
+      </div>
+      <div>
+        <h4>Azienda</h4>
+        <button data-goto="chi-siamo">Chi siamo</button>
+        <button data-goto="blog">Blog</button>
+        <button data-goto="contatti">Contatti</button>
+      </div>
+      <div>
+        <h4>Contatti</h4>
+        <button data-goto="contatti">Lorem ipsum</button>
+        <button data-goto="contatti">Lorem ipsum</button>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Mast Srls</span>
+      <span>Lorem ipsum · Lorem ipsum · Lorem ipsum</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function goTo(pageId){
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelectorAll('.nav-links button').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-page') === pageId);
+  });
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav-links button').forEach(function(btn){
+  btn.addEventListener('click', function(){ goTo(btn.getAttribute('data-page')); });
+});
+document.querySelectorAll('[data-goto]').forEach(function(el){
+  el.addEventListener('click', function(e){ e.preventDefault(); goTo(el.getAttribute('data-goto')); });
+});
+</script>
+
+</body>
+</html>
