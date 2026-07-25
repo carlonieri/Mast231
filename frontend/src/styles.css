@@ -168,6 +168,27 @@ h2 {
   flex-wrap: wrap;
 }
 
+.riquadro-richiamo-zona {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.riquadro-richiamo-zona-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.riquadro-richiamo-zona p {
+  margin: 8px 0 0;
+}
+
 .filtri-riga select,
 .filtri-riga input[type='text'] {
   padding: 6px 10px;

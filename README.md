@@ -15,9 +15,9 @@ solo in lettura via IMAP).
 > correzione.
 
 > Stato attuale: tutte le funzionalità principali sono implementate (tracciamento
-> invii/risposte, routing, dashboard, carica lista, assistente, login). Restano
-> aperti: export CSV/vCard per città/regione (requisito #8, da validare col
-> cliente), scheduling automatico dei job periodici, archiviazione/backup dati.
+> invii/risposte, routing, dashboard, carica lista, richiamo per zona, assistente,
+> login). Restano aperti: scheduling automatico dei job periodici, archiviazione/
+> backup dati.
 
 ## Struttura del repository
 
@@ -148,6 +148,21 @@ progetto oltre alla lettura — mai un invio) con i destinatari già inseriti ne
 campo A: oggetto e corpo restano vuoti, il testo resta sempre dell'operatore.
 `GET /api/caricamenti` restituisce lo storico degli ultimi caricamenti.
 
+### Richiamo "senza risposta" per zona
+
+Requisito funzionale #8. L'idea originale (sincronizzare un Gruppo Contatti
+Outlook via Microsoft Graph) non è utilizzabile su una casella Aruba/IMAP;
+invece di un export CSV/vCard separato da importare a mano, **riusa lo stesso
+meccanismo di "Carica lista giornaliera"**: `POST /api/gruppi-export-richiamo`
+(`{ citta, regione }`, almeno uno dei due obbligatorio) genera una bozza email
+reale in Bozze con i contatti in stato `senza_risposta` di quella zona — non
+in "A" ma in **CCN**, perché non devono vedersi tra loro — con lo stesso
+scaglionamento oltre soglia (`UPLOAD_BATCH_SIZE`) di "Carica lista
+giornaliera". Il sistema prepara solo i destinatari: oggetto e testo restano
+sempre dell'operatore, nessun invio automatico. Collegato nel frontend nella
+sezione "Senza risposta": genera per la città/regione attualmente filtrata.
+`GET /api/gruppi-export-richiamo` restituisce lo storico delle generazioni.
+
 ### Assistente in-app
 
 `POST /api/assistente/chat` (`{ messaggi: [{ ruolo: 'operatore'|'assistente', testo }] }`,
@@ -210,7 +225,9 @@ L'app parte su `http://localhost:5173` e richiede il backend attivo su `http://l
   `acquisito` impostabile solo a mano (nessun segnale email lo rileva automaticamente),
   "Esclusi" legge dalla tabella `esclusioni` (i lead con richiesta di rimozione vengono
   cancellati, non marcati). Aggiunta anche una sesta vista **Non interessati**, non elencata
-  esplicitamente tra le 5 ma necessaria per non nascondere quei contatti.
+  esplicitamente tra le 5 ma necessaria per non nascondere quei contatti. In "Senza risposta"
+  è presente anche il pulsante per generare la bozza di richiamo per la zona filtrata
+  (requisito #8, vedi sopra).
 - **Dettaglio contatto** (`/contatti/:id`) — storico email completo, richiami collegati,
   avviso anti-duplicazione (requisito #2) se l'ultimo contatto risale a meno di 7 giorni,
   cambio stato manuale.

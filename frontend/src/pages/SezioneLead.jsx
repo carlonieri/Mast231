@@ -1,10 +1,68 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getLeads, getFiltriLead, exportLeadUrl } from '../api/client';
+import { getLeads, getFiltriLead, exportLeadUrl, generaRichiamoZona } from '../api/client';
 import BadgeStato from '../components/BadgeStato';
 import { formatDataOra } from '../utils/formato';
 
-function SezioneLead({ titolo, stati }) {
+// Solo per la sezione "Senza risposta": genera una bozza reale (CCN, stesso
+// scaglionamento di "Carica lista giornaliera") con i contatti della zona
+// attualmente filtrata — vedi spec, requisito funzionale #8.
+function RichiamoZona({ citta, regione }) {
+  const [inCorso, setInCorso] = useState(false);
+  const [errore, setErrore] = useState(null);
+  const [esito, setEsito] = useState(null);
+
+  const zonaScelta = Boolean(citta || regione);
+  const etichettaZona = [citta, regione].filter(Boolean).join(' / ') || 'tutte le zone';
+
+  async function genera() {
+    setInCorso(true);
+    setErrore(null);
+    setEsito(null);
+    try {
+      const risultato = await generaRichiamoZona({ citta, regione });
+      setEsito(risultato);
+    } catch (e) {
+      setErrore(e.message);
+    } finally {
+      setInCorso(false);
+    }
+  }
+
+  return (
+    <div className="riquadro-richiamo-zona">
+      <div className="riquadro-richiamo-zona-riga">
+        <div>
+          <strong>Richiamo per zona:</strong> genera una bozza email con i contatti "senza risposta" di{' '}
+          <em>{etichettaZona}</em> già inseriti in CCN, pronta da aprire in Outlook.
+        </div>
+        <button type="button" className="btn btn-secondario" onClick={genera} disabled={inCorso || !zonaScelta}>
+          {inCorso ? 'Generazione…' : 'Genera bozza richiamo'}
+        </button>
+      </div>
+      {!zonaScelta && <p className="testo-muted">Seleziona prima una città o una regione dai filtri sopra.</p>}
+      {errore && <p className="testo-errore">{errore}</p>}
+      {esito && esito.numero_destinatari === 0 && (
+        <p className="testo-muted">Nessun contatto "senza risposta" in questa zona: nessuna bozza generata.</p>
+      )}
+      {esito && esito.numero_destinatari > 0 && esito.bozze.length === 1 && (
+        <p>
+          Generata <strong>1 bozza</strong> (CCN) nella cartella Bozze con <strong>{esito.numero_destinatari}</strong>{' '}
+          destinatari.
+        </p>
+      )}
+      {esito && esito.numero_destinatari > 0 && esito.bozze.length > 1 && (
+        <p>
+          Più di {esito.soglia_batch} contatti: scaglionati automaticamente in{' '}
+          <strong>{esito.bozze.length} bozze</strong> (CCN, massimo {esito.soglia_batch} destinatari ciascuna) —{' '}
+          {esito.numero_destinatari} destinatari totali.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SezioneLead({ titolo, stati, mostraRichiamoZona = false }) {
   const statoParam = stati.join(',');
   const [leads, setLeads] = useState([]);
   const [caricamento, setCaricamento] = useState(true);
@@ -55,6 +113,8 @@ function SezioneLead({ titolo, stati }) {
           ))}
         </select>
       </div>
+
+      {mostraRichiamoZona && <RichiamoZona citta={citta} regione={regione} />}
 
       {caricamento && <p>Caricamento…</p>}
       {errore && <p className="testo-errore">{errore}</p>}

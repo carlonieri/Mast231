@@ -19,7 +19,12 @@ const SEZIONI_CONFIG = [
   { slug: 'acquisiti', titolo: 'Clienti già acquisiti', stati: ['acquisito'] },
   { slug: 'in-acquisizione', titolo: 'Clienti in acquisizione', stati: ['da_contattare', 'contattato'] },
   { slug: 'interessati', titolo: 'Clienti potenziali / interessati', stati: ['interessato'] },
-  { slug: 'senza-risposta', titolo: 'Clienti contattati senza risposta', stati: ['senza_risposta'] },
+  {
+    slug: 'senza-risposta',
+    titolo: 'Clienti contattati senza risposta',
+    stati: ['senza_risposta'],
+    mostraRichiamoZona: true,
+  },
   { slug: 'non-interessati', titolo: 'Non interessati', stati: ['non_interessato'] },
 ];
 
@@ -35,7 +40,7 @@ function App() {
               <Route
                 key={cfg.slug}
                 path={`/${cfg.slug}`}
-                element={<SezioneLead titolo={cfg.titolo} stati={cfg.stati} />}
+                element={<SezioneLead titolo={cfg.titolo} stati={cfg.stati} mostraRichiamoZona={cfg.mostraRichiamoZona} />}
               />
             ))}
             <Route path="/contatti/:id" element={<DettaglioContatto />} />

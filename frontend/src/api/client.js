@@ -103,6 +103,12 @@ export function getCaricamenti() {
   return request('/api/caricamenti');
 }
 
+// Richiamo "senza risposta" per zona: genera una bozza (o più, scaglionate)
+// con i destinatari in CCN, stesso meccanismo di "Carica lista giornaliera".
+export function generaRichiamoZona({ citta, regione }) {
+  return request('/api/gruppi-export-richiamo', { method: 'POST', body: JSON.stringify({ citta, regione }) });
+}
+
 // Multipart/form-data: non passa dall'helper request() perché non deve
 // forzare Content-Type: application/json (il browser imposta da solo il
 // boundary corretto quando il body è un FormData).

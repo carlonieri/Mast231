@@ -97,10 +97,11 @@ require.cache[dashboardServicePath] = {
   exports: { getAndamentoMensile: getAndamentoMensileDemo },
 };
 
-// "Carica lista giornaliera" genera una bozza reale via IMAP (unica scrittura
-// del progetto) — non disponibile in modalità demo (nessuna casella vera).
-// Qui si finge l'esito con la stessa forma del risultato reale, per poter
-// comunque mostrare il riepilogo/scaglionamento nel frontend.
+// "Carica lista giornaliera" e il richiamo "senza risposta" per zona generano
+// una bozza reale via IMAP (unica scrittura del progetto) — non disponibile
+// in modalità demo (nessuna casella vera). Qui si finge l'esito con la stessa
+// forma del risultato reale (il parametro campo/'to'/'bcc' è accettato ma
+// irrilevante per la finzione, non c'è una vera bozza da popolare).
 let prossimoUidFinto = 1000;
 async function generateDraftsForBatchesDemo(batches) {
   if (!batches || batches.length === 0) return [];

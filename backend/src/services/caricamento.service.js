@@ -1,16 +1,9 @@
 const { getPool } = require('../config/db');
 const { parseUploadedFile, isValidEmail } = require('./upload-parser.service');
 const { generateDraftsForBatches } = require('./imap-draft.service');
+const { chunk } = require('../utils/chunk');
 
 const DEFAULT_BATCH_SIZE = 150;
-
-function chunk(array, size) {
-  const chunks = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
 
 async function findEsclusioniMap(emails) {
   if (emails.length === 0) return new Map();

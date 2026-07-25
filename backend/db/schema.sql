@@ -84,17 +84,20 @@ CREATE TABLE esclusioni (
   motivo TEXT
 );
 
--- Sostituisce l'idea originale "gruppi_outlook_sync" (legata a Microsoft Graph, non
--- disponibile su casella Aruba/IMAP). Soluzione provvisoria: export CSV/vCard per
--- import manuale in Outlook — vedi requisito funzionale #8 nella spec.
+-- Sostituisce l'idea originale "gruppi_outlook_sync" (legata a Microsoft Graph,
+-- non disponibile su casella Aruba/IMAP) — vedi requisito funzionale #8 nella
+-- spec. Soluzione scelta (non un export CSV/vCard separato): riusa lo stesso
+-- meccanismo di imap-draft.service.js già collegato a "Carica lista
+-- giornaliera" — genera una bozza reale con i contatti "senza risposta" della
+-- zona scelta in CCN (stesso scaglionamento oltre soglia). Una riga per ogni
+-- generazione (log, non un record da aggiornare).
 CREATE TABLE gruppi_export_richiamo (
   id SERIAL PRIMARY KEY,
   citta TEXT,
   regione TEXT,
-  formato TEXT NOT NULL DEFAULT 'csv' CHECK (formato IN ('csv', 'vcard')),
-  data_ultimo_export TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  numero_destinatari INTEGER NOT NULL,
+  numero_bozze INTEGER NOT NULL,
+  data_generazione TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ==== Indici (sezione "Anti-intasamento" della spec) ====
