@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — palette e tipografia del brand Mast 231.
+ * Unica fonte di verità per i colori: nessun hex hardcoded nei componenti,
+ * usare sempre le utility Tailwind generate da questi token (bg-cream, text-charcoal, ecc.).
+ */
+@theme {
+  --color-cream: #F4EDE3;
+  --color-beige: #E4D8C9;
+  --color-charcoal: #2E2B28;
+  --color-charcoal-soft: #4A4640;
+  --color-coral: #F0A872;
+  --color-yellow: #F2D35E;
+  --color-teal: #6FAF9E;
+  --color-line: #DCD0BE;
+
+  --font-serif: var(--font-fraunces), serif;
+  --font-sans: var(--font-inter), sans-serif;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-charcoal);
+}
