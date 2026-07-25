@@ -12,6 +12,13 @@
 
 require('dotenv').config();
 const { getPool } = require('../src/config/db');
+const { creaUtente } = require('../src/services/auth.service');
+
+// Password identiche e semplici: solo per la demo locale, mai usarle altrove.
+const UTENTI_DEMO = [
+  { nome: 'Maria Titolare', email: 'titolare@demo.it', password: 'demo1234', ruolo: 'titolare' },
+  { nome: 'Luca Operatore', email: 'operatore@demo.it', password: 'demo1234', ruolo: 'operatore' },
+];
 
 function giorniFa(n) {
   const d = new Date();
@@ -28,7 +35,11 @@ const LEADS = [
     stato: 'interessato',
     inviata: { giorniFa: 6, oggetto: 'Servizi di consulenza antiriciclaggio D.Lgs 231/2007', categoria: 'Antiriciclaggio D.Lgs 231/2007' },
     ricevuta: { giorniFa: 5, oggetto: 'Re: Servizi di consulenza antiriciclaggio D.Lgs 231/2007', categoria: 'interessato' },
-    richiamo: { giorniFa: 0, motivo: 'Lead interessato — contattare (oggetto: "Re: Servizi di consulenza antiriciclaggio D.Lgs 231/2007")' },
+    richiamo: {
+      giorniFa: 0,
+      motivo: 'Lead interessato — contattare (oggetto: "Re: Servizi di consulenza antiriciclaggio D.Lgs 231/2007")',
+      assegnaTitolare: true,
+    },
   },
   {
     email: 'info@studioverdi-demo.it',
@@ -117,7 +128,7 @@ const ESCLUSIONI = [
   { email: 'bloccato.manualmente@demo-legale.it', motivo: 'Bounce permanente — indirizzo non più attivo', giorniFa: 3 },
 ];
 
-async function inserisciLead(pool, lead) {
+async function inserisciLead(pool, lead, titolareId) {
   const ultimaData = lead.ricevuta?.giorniFa ?? lead.inviata?.giorniFa;
   const ultimaCategoria = lead.ricevuta?.categoria === 'bounce' || lead.ricevuta?.categoria === 'risposta_automatica_assenza'
     ? lead.inviata?.categoria
@@ -155,9 +166,9 @@ async function inserisciLead(pool, lead) {
   }
   if (lead.richiamo) {
     await pool.query(
-      `INSERT INTO follow_up (lead_id, data_suggerita, motivo, stato)
-       VALUES ($1, $2, $3, 'da_fare')`,
-      [leadId, giorniFa(lead.richiamo.giorniFa), lead.richiamo.motivo]
+      `INSERT INTO follow_up (lead_id, data_suggerita, motivo, stato, assegnato_a)
+       VALUES ($1, $2, $3, 'da_fare', $4)`,
+      [leadId, giorniFa(lead.richiamo.giorniFa), lead.richiamo.motivo, lead.richiamo.assegnaTitolare ? titolareId : null]
     );
   }
 }
@@ -166,15 +177,25 @@ async function inserisciLead(pool, lead) {
 // sia dalla modalità demo in memoria (npm run demo, senza Postgres installato).
 async function seedDemoData(pool) {
   console.log('Svuoto le tabelle del gestionale (TRUNCATE)...');
-  // caricamenti -> CASCADE su leads -> CASCADE su email_events/follow_up
+  // utenti prima: follow_up.assegnato_a la referenzia, e caricamenti -> CASCADE
+  // su leads -> CASCADE su email_events/follow_up svuota comunque i richiami.
+  await pool.query('TRUNCATE TABLE utenti RESTART IDENTITY CASCADE');
   await pool.query('TRUNCATE TABLE caricamenti RESTART IDENTITY CASCADE');
   await pool.query('TRUNCATE TABLE esclusioni RESTART IDENTITY CASCADE');
   await pool.query('TRUNCATE TABLE categorizzazioni_batch RESTART IDENTITY CASCADE');
 
+  console.log(`Creo ${UTENTI_DEMO.length} account di esempio...`);
+  let titolareId = null;
+  for (const u of UTENTI_DEMO) {
+    // eslint-disable-next-line no-await-in-loop
+    const creato = await creaUtente(u);
+    if (u.ruolo === 'titolare') titolareId = creato.id;
+  }
+
   console.log(`Inserisco ${LEADS.length} lead di esempio...`);
   for (const lead of LEADS) {
     // eslint-disable-next-line no-await-in-loop
-    await inserisciLead(pool, lead);
+    await inserisciLead(pool, lead, titolareId);
   }
 
   console.log(`Inserisco ${ESCLUSIONI.length} esclusioni di esempio...`);
@@ -209,10 +230,11 @@ async function seedDemoData(pool) {
   );
 
   console.log('\nFatto. Dati di esempio inseriti:');
+  console.log(`  ${UTENTI_DEMO.length} account (titolare@demo.it / operatore@demo.it, password: demo1234)`);
   console.log(`  ${LEADS.length} lead (tutti gli stati rappresentati)`);
   console.log(`  ${ESCLUSIONI.length} esclusioni`);
   console.log('  1 caricamento di esempio');
-  console.log('  Richiami di oggi: 3 (Bianchi, Neri, Blu)');
+  console.log('  Richiami di oggi: 3 (Bianchi già preso in carico dal titolare, Neri e Blu non assegnati)');
 }
 
 module.exports = { seedDemoData };

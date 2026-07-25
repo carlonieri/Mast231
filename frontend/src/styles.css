@@ -79,9 +79,24 @@ body {
   gap: 10px;
 }
 
+.app-titolo-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .app-titolo {
   font-weight: 700;
   font-size: 1.1rem;
+}
+
+.app-utente {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 .app-nav {
@@ -153,12 +168,21 @@ h2 {
   flex-wrap: wrap;
 }
 
-.filtri-riga select {
+.filtri-riga select,
+.filtri-riga input[type='text'] {
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-primary);
+}
+
+.filtri-riga input[type='file'] {
+  color: var(--text-primary);
+}
+
+.riepilogo-caricamento {
+  margin-top: 20px;
 }
 
 .filtro-checkbox {
@@ -560,4 +584,65 @@ h2 {
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-primary);
+}
+
+.pagina-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--page-plane);
+  padding: 24px;
+}
+
+.scheda-login {
+  width: 100%;
+  max-width: 340px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scheda-login h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.scheda-login label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+.scheda-login input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--page-plane);
+  color: var(--text-primary);
+}
+
+.scheda-login button {
+  margin-top: 10px;
+}
+
+.azioni-utente,
+.azioni-richiamo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.azioni-utente input[type='password'] {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  width: 140px;
 }

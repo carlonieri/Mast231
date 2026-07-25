@@ -5,10 +5,12 @@
 // Postgres né avere ancora credenziali IMAP/Claude reali.
 //
 // I dati si azzerano ad ogni riavvio: NON persistono, è solo una vetrina.
-// Le funzionalità che richiedono una vera casella email (upload con bozza
-// IMAP, job di lettura Posta Inviata/Arrivo) o una vera chiave Claude
-// (assistente in-app) non funzioneranno in questa modalità: tutto il resto
-// (le 5+1 sezioni, dettaglio contatto, dashboard, richiami) sì.
+// L'upload "Carica lista giornaliera" funziona (bozza finta, stessa forma di
+// quella reale). Restano non disponibili in questa modalità solo le
+// funzionalità che richiedono una vera casella email (i job di lettura Posta
+// Inviata/Arrivo) o una vera chiave Claude (assistente in-app).
+//
+// Login demo: titolare@demo.it / operatore@demo.it, password "demo1234".
 //
 // Uso: npm run demo
 
@@ -35,6 +37,10 @@ require.cache[dbConfigPath] = {
 };
 
 process.env.PORT = process.env.PORT || '3000';
+// Evita connect-pg-simple (le sue query sul salvataggio sessione non sono
+// compatibili con l'emulatore in memoria): in demo si usa lo store di default
+// di express-session, va benissimo per un solo processo che si azzera al riavvio.
+process.env.DEMO_MODE = 'true';
 
 // L'emulatore in memoria (pg-mem) non regge GROUP BY su un'espressione
 // calcolata (es. date_trunc/to_char su una colonna timestamp) — è un suo
@@ -89,6 +95,29 @@ require.cache[dashboardServicePath] = {
   filename: dashboardServicePath,
   loaded: true,
   exports: { getAndamentoMensile: getAndamentoMensileDemo },
+};
+
+// "Carica lista giornaliera" genera una bozza reale via IMAP (unica scrittura
+// del progetto) — non disponibile in modalità demo (nessuna casella vera).
+// Qui si finge l'esito con la stessa forma del risultato reale, per poter
+// comunque mostrare il riepilogo/scaglionamento nel frontend.
+let prossimoUidFinto = 1000;
+async function generateDraftsForBatchesDemo(batches) {
+  if (!batches || batches.length === 0) return [];
+  return batches.map((batch, i) => ({
+    numeroBatch: i + 1,
+    destinatari: batch.map((riga) => riga.email),
+    // eslint-disable-next-line no-plusplus
+    uid: prossimoUidFinto++,
+  }));
+}
+
+const imapDraftServicePath = require.resolve('../src/services/imap-draft.service.js');
+require.cache[imapDraftServicePath] = {
+  id: imapDraftServicePath,
+  filename: imapDraftServicePath,
+  loaded: true,
+  exports: { generateDraftsForBatches: generateDraftsForBatchesDemo },
 };
 
 async function main() {

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getFollowUp, markFollowUpDone } from '../api/client';
+import { getFollowUp, markFollowUpDone, prendiInCaricoFollowUp } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
 import { formatData } from '../utils/formato';
 
 function Richiami() {
+  const { utente } = useAuth();
   const [soloOggi, setSoloOggi] = useState(true);
   const [richiami, setRichiami] = useState([]);
   const [caricamento, setCaricamento] = useState(true);
@@ -30,12 +32,21 @@ function Richiami() {
     }
   }
 
+  async function prendiInCarico(id) {
+    try {
+      await prendiInCaricoFollowUp(id);
+      carica();
+    } catch (e) {
+      setErrore(e.message);
+    }
+  }
+
   return (
     <section>
       <h1>Richiami{soloOggi ? ' del giorno' : ''}</h1>
       <p className="testo-muted">
-        Il sistema pianifica, non invia: segna qui i richiami evasi dopo aver scritto e inviato tu il messaggio da
-        Outlook.
+        Il sistema pianifica, non invia: prendi in carico un richiamo per assegnartelo, poi segnalo evaso dopo aver
+        scritto e inviato tu il messaggio da Outlook.
       </p>
 
       <label className="filtro-checkbox">
@@ -55,6 +66,7 @@ function Richiami() {
               <th>Contatto</th>
               <th>Città</th>
               <th>Motivo</th>
+              <th>Assegnato a</th>
               <th />
             </tr>
           </thead>
@@ -68,6 +80,22 @@ function Richiami() {
                 <td>{r.citta || '—'}</td>
                 <td>{r.motivo}</td>
                 <td>
+                  {r.assegnato_nome ? (
+                    r.assegnato_a === utente?.id ? (
+                      <span className="badge badge-buono">Tu</span>
+                    ) : (
+                      r.assegnato_nome
+                    )
+                  ) : (
+                    <span className="testo-muted">Non assegnato</span>
+                  )}
+                </td>
+                <td className="azioni-richiamo">
+                  {!r.assegnato_a && (
+                    <button type="button" className="btn btn-piccolo" onClick={() => prendiInCarico(r.id)}>
+                      Prendi in carico
+                    </button>
+                  )}
                   <button type="button" className="btn btn-piccolo" onClick={() => segnaEvaso(r.id)}>
                     Segna evaso
                   </button>

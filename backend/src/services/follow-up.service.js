@@ -14,9 +14,9 @@ async function createFollowUp({ leadId, motivo, dataSuggerita }) {
   return result.rows[0].id;
 }
 
-// Lista dei richiami, con i dati del lead collegato. `soloOggi` filtra a
-// scadenza oggi o già scaduta (data_suggerita <= oggi) — usato per
-// l'indicatore "richiami del giorno" nell'interfaccia.
+// Lista dei richiami, con i dati del lead collegato e dell'operatore
+// assegnato (se presente). `soloOggi` filtra a scadenza oggi o già scaduta
+// (data_suggerita <= oggi) — usato per l'indicatore "richiami del giorno".
 async function listFollowUp({ stato = 'da_fare', soloOggi = false } = {}) {
   const condizioni = ['f.stato = $1'];
   const parametri = [stato];
@@ -27,9 +27,11 @@ async function listFollowUp({ stato = 'da_fare', soloOggi = false } = {}) {
 
   const result = await getPool().query(
     `SELECT f.id, f.lead_id, f.data_suggerita, f.motivo, f.stato, f.created_at,
-            l.email, l.nome, l.citta, l.regione
+            l.email, l.nome, l.citta, l.regione,
+            f.assegnato_a, u.nome AS assegnato_nome
      FROM follow_up f
      JOIN leads l ON l.id = f.lead_id
+     LEFT JOIN utenti u ON u.id = f.assegnato_a
      WHERE ${condizioni.join(' AND ')}
      ORDER BY f.data_suggerita ASC NULLS LAST, f.created_at ASC`,
     parametri
@@ -47,4 +49,16 @@ async function markFollowUpDone(id) {
   return result.rows[0] || null;
 }
 
-module.exports = { createFollowUp, listFollowUp, markFollowUpDone };
+// "Prendi in carico": un operatore loggato si assegna il task. Solo
+// auto-assegnazione (nessuna riassegnazione ad altri) — vedi discussione con
+// l'utente: i task nascono da job automatici, senza operatore collegato, e
+// vengono presi in carico da chi li apre in Richiami.
+async function prendiInCarico(id, utenteId) {
+  const result = await getPool().query(
+    `UPDATE follow_up SET assegnato_a = $1, updated_at = now() WHERE id = $2 RETURNING *`,
+    [utenteId, id]
+  );
+  return result.rows[0] || null;
+}
+
+module.exports = { createFollowUp, listFollowUp, markFollowUpDone, prendiInCarico };

@@ -2,6 +2,21 @@
 -- Vedi docs/mast231_gestionale_spec.md sezione 3 ("Architettura proposta") per il contesto.
 -- Solo struttura: nessuna funzionalità applicativa è ancora collegata a queste tabelle.
 
+-- Account per il login (titolare + operatori). Password sempre come hash
+-- (bcrypt), mai in chiaro. 'attivo' disattiva l'accesso senza cancellare
+-- l'account: preserva lo storico (follow_up.assegnato_a) e la possibilità di
+-- riattivarlo, invece di una DELETE distruttiva.
+CREATE TABLE utenti (
+  id SERIAL PRIMARY KEY,
+  nome TEXT NOT NULL,
+  email TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  ruolo TEXT NOT NULL DEFAULT 'operatore' CHECK (ruolo IN ('titolare', 'operatore')),
+  attivo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX idx_utenti_email ON utenti(email);
+
 CREATE TABLE caricamenti (
   id SERIAL PRIMARY KEY,
   fonte TEXT,                    -- es. nome file importato
@@ -51,9 +66,14 @@ CREATE TABLE follow_up (
   data_suggerita DATE,
   motivo TEXT,
   stato TEXT NOT NULL DEFAULT 'da_fare' CHECK (stato IN ('da_fare', 'fatto')),
+  -- NULL = non assegnato. Creato sempre NULL (i task nascono da job
+  -- automatici, senza un operatore loggato al momento della creazione):
+  -- un operatore lo prende in carico da Richiami, assegnandolo a se stesso.
+  assegnato_a INTEGER REFERENCES utenti(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE INDEX idx_follow_up_assegnato_a ON follow_up(assegnato_a);
 
 -- Tabella separata da leads: blocca anche indirizzi mai caricati come lead
 -- (es. qualcuno scrive direttamente chiedendo di non essere ricontattato).

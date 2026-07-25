@@ -14,9 +14,10 @@ solo in lettura via IMAP).
 > spec originale conteneva ancora riferimenti a Graph/Azure AD, superati da questa
 > correzione.
 
-> Stato attuale: solo impalcatura iniziale (struttura cartelle, dipendenze base,
-> server Express che risponde su `/health`, app React vuota). Nessuna funzionalità
-> di business è ancora implementata.
+> Stato attuale: tutte le funzionalità principali sono implementate (tracciamento
+> invii/risposte, routing, dashboard, carica lista, assistente, login). Restano
+> aperti: export CSV/vCard per città/regione (requisito #8, da validare col
+> cliente), scheduling automatico dei job periodici, archiviazione/backup dati.
 
 ## Struttura del repository
 
@@ -55,6 +56,7 @@ cd backend
 npm install
 cp .env.example .env
 # compila .env con le tue credenziali (vedi sezione "Variabili d'ambiente" sotto)
+# applica lo schema su un Postgres già creato: psql -U <utente> -d <db> -f db/schema.sql
 npm run dev
 ```
 
@@ -63,6 +65,14 @@ Verifica che sia su con:
 
 ```bash
 curl http://localhost:3000/health
+```
+
+Su un database appena creato non esiste ancora nessun account: crea il primo
+(titolare) da riga di comando, poi accedi al gestionale e crea gli altri da
+"Gestione utenti" (vedi sezione "Login e gestione utenti" sotto):
+
+```bash
+npm run utenti:crea-primo -- "Nome Cognome" email@esempio.it password
 ```
 
 ### Testare il collegamento IMAP senza toccare la casella del cliente
@@ -103,9 +113,9 @@ sono vere risposte, quindi non toccano lo stato del lead — e classifica le
 risposte umane con Claude in interessato / non interessato / rimozione /
 ambiguo, applicando il routing corrispondente (per "rimozione", l'unica azione
 autonoma prevista dalla spec: il lead viene cancellato e l'indirizzo escluso
-in modo permanente). Se "interessato", crea un task da evadere in `follow_up`
-(non esiste ancora un sistema di utenti/assegnazione: il task non è assegnato
-a una persona specifica, resta da evadere per chiunque operi sul gestionale).
+in modo permanente). Se "interessato", crea un task da evadere in `follow_up`,
+non assegnato a nessuno (il job gira in background, senza un operatore
+collegato): un operatore lo prende in carico da "Richiami" assegnandoselo.
 Rieseguibile senza duplicare eventi già loggati.
 
 ```bash
@@ -147,6 +157,38 @@ faccio Y). Non esegue azioni al posto dell'operatore, né nell'app né su
 Outlook: nessun tool a disposizione, solo testo. Widget di chat sempre visibile
 in basso a destra in ogni pagina del frontend.
 
+### Login e gestione utenti
+
+Autenticazione a sessione (cookie `httpOnly`, firmato con `SESSION_SECRET`),
+non a token: più semplice per un gestionale interno a pochi utenti, senza
+bisogno di gestire refresh-token lato frontend. Le sessioni sono salvate su
+Postgres (`connect-pg-simple`, tabella creata automaticamente al primo avvio)
+così sopravvivono ai riavvii del server — l'unica eccezione è la modalità
+demo, che usa lo store in memoria di default (si azzera comunque ad ogni
+riavvio, coerente con tutto il resto della demo).
+
+Ogni account (`utenti`: nome, email, password con hash bcrypt, ruolo
+`titolare`/`operatore`) è personale — niente credenziali condivise. Il primo
+account (titolare) si crea da riga di comando (`npm run utenti:crea-primo`,
+vedi sopra); tutti i successivi si creano dalla pagina **"Gestione utenti"**
+nel frontend (`/utenti`, visibile solo al titolare in navigazione — e
+comunque protetta anche lato server: un operatore che chiama direttamente
+`/api/utenti` riceve 403). Da lì il titolare può anche disattivare un account
+(blocca l'accesso senza cancellarlo, per non perdere lo storico dei task già
+presi in carico) o reimpostare una password dimenticata — non esiste un
+flusso di recupero autonomo via email.
+
+`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`. Tutte le
+altre route `/api/*` richiedono una sessione valida (401 altrimenti).
+
+**Assegnazione dei task "interessato"**: quando un lead risponde in modo
+interessato, il task in `follow_up` nasce sempre non assegnato (è
+`log-inbox-replies.job.js`, un job schedulato, a crearlo — nessun operatore è
+"loggato" in quel momento). Un operatore lo assegna a se stesso con "Prendi in
+carico" nella pagina Richiami (`PATCH /api/follow-up/:id/prendi-in-carico`,
+usa l'utente della sessione corrente) — solo auto-assegnazione, nessuna
+riassegnazione ad altri.
+
 ## Setup — Frontend
 
 ```bash
@@ -174,14 +216,19 @@ L'app parte su `http://localhost:5173` e richiede il backend attivo su `http://l
   cambio stato manuale.
 - **Dashboard** (`/dashboard`) — andamento mensile con grafico + tabella dati.
 - **Richiami** (`/richiami`) — task da evadere (`follow_up`), con l'indicatore dei richiami
-  del giorno sempre visibile nella barra di navigazione.
+  del giorno sempre visibile nella barra di navigazione e l'assegnazione ("Prendi in carico")
+  a chi è loggato.
+- **Gestione utenti** (`/utenti`, solo titolare) — crea/disattiva account, resetta password.
+- **Login** (`/login`) — tutte le rotte sopra richiedono una sessione valida, altrimenti
+  si viene reindirizzati qui.
 
 ## Variabili d'ambiente
 
 Ogni sottoprogetto ha il proprio `.env.example` da copiare in `.env` (mai committare `.env`).
 
 - `backend/.env.example`: connessione al database Postgres, chiave Claude API,
-  credenziali IMAP della casella email (Aruba), secret di sessione.
+  credenziali IMAP della casella email (Aruba), URL del frontend (per CORS con
+  cookie di sessione — deve combaciare esattamente), secret di sessione.
 - `frontend/.env.example`: URL base dell'API backend.
 
 **Nota sulle credenziali email**: la casella del cliente è ospitata su Aruba (hosting
