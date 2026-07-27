@@ -263,6 +263,37 @@ npm run dev
 L'app parte su `http://localhost:5173` e richiede il backend attivo su `http://localhost:3000`
 (`VITE_API_BASE_URL` in `frontend/.env`).
 
+### Sistema di design
+
+Brand AnchorAI (azienda che ha sviluppato il gestionale per conto di Mast231 — il
+nome "Mast231" resta il titolo del prodotto, invariato). Pensato per uno strumento
+usato ore ogni giorno, non per una landing page: poche scelte, sempre uguali,
+niente decorazioni. Tutti i token sono in `frontend/src/styles.css`.
+
+- **Colore**: neutri antracite/bianco (`--text-primary`, `--surface-1`, ecc.) + un'unica
+  famiglia di blu come accento (`--accent`/`--accent-light`/`--accent-dark`/`--accent-tint`),
+  campionata dal logo e validata per contrasto — nessun altro colore decorativo. Il grafico
+  dashboard usa la stessa rampa (3 tonalità di blu, ordinal single-hue). Rosso/ambra restano
+  riservati a segnali funzionali (errori, badge critici/avviso) — mai usati come accento.
+- **Tipografia**: due font self-hosted (`@fontsource`, nessuna richiesta a CDN esterni —
+  coerente con un'app che tratta dati di compliance/GDPR). **IBM Plex Sans** (600/700) per
+  titoli e intestazioni — `--font-heading`. **Public Sans** (400/500/600) per corpo del
+  testo, tabelle e dati — `--font-body`, scelto per leggere molta informazione densa a lungo
+  senza affaticare.
+- **Forma**: scala di 3 raggi (`--radius-sm` 6px per controlli, `--radius-md` 10px per
+  contenitori, `--radius-pill` per i soli badge di stato) e scala di 6 spaziature
+  (`--space-1`…`--space-6`, 4→32px) — nessun valore "a occhio" nel resto del foglio di
+  stile. Ombre riservate a ciò che galleggia sopra la pagina (il widget assistente): mai
+  su card, tabelle o pulsanti.
+- **Pulsanti**: gerarchia a tre livelli. `.btn-primario` (sfondo blu pieno) per l'unica
+  azione principale di ogni schermata (Accedi, Carica, Crea account, Genera bozza
+  richiamo…). `.btn-secondario` (bordo blu, sfondo trasparente) per azioni rilevanti ma
+  non uniche — attualmente non in uso, disponibile per casi futuri. `.btn` semplice
+  (bordo neutro) per azioni di contorno (Esporta Excel, Segna evaso, Disattiva…).
+- **Stati di interazione**: bordo blu + alone leggero al focus su input/select (prima
+  assente — affidato al default del browser), tinta blu leggera all'hover sulle righe
+  delle tabelle, transizione di 120ms su hover/focus dei controlli.
+
 ### Sezioni del gestionale
 
 - **Acquisiti / In acquisizione / Interessati / Senza risposta / Esclusi** — le 5 sezioni

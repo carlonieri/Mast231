@@ -152,7 +152,7 @@ function CaricaLista() {
             onChange={(e) => setRegione(e.target.value)}
             disabled={inCorso || Boolean(revisione)}
           />
-          <button type="submit" className="btn btn-secondario" disabled={inCorso || Boolean(revisione)}>
+          <button type="submit" className="btn btn-primario" disabled={inCorso || Boolean(revisione)}>
             {inCorso ? 'Caricamento…' : 'Carica'}
           </button>
         </div>
@@ -201,7 +201,7 @@ function CaricaLista() {
               })}
             </tbody>
           </table>
-          <button type="button" className="btn btn-secondario" onClick={gestisciConferma} disabled={confermaInCorso}>
+          <button type="button" className="btn btn-primario" onClick={gestisciConferma} disabled={confermaInCorso}>
             {confermaInCorso ? 'Conferma in corso…' : 'Conferma e genera bozze'}
           </button>
         </div>
@@ -333,7 +333,7 @@ function CaricaLista() {
                 <td>{c.stato === 'in_revisione' ? 'In attesa di revisione' : 'Completato'}</td>
                 <td>
                   {c.stato === 'in_revisione' && !revisione && (
-                    <button type="button" className="btn btn-secondario" onClick={() => gestisciRiprendi(c.id)}>
+                    <button type="button" className="btn btn-piccolo" onClick={() => gestisciRiprendi(c.id)}>
                       Riprendi
                     </button>
                   )}

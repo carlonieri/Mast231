@@ -110,7 +110,10 @@ function DettaglioContatto() {
 
       <h2>Storico email ({dettaglio.storico.length})</h2>
       {dettaglio.storico.length === 0 ? (
-        <p className="testo-muted">Nessuna email registrata per questo contatto.</p>
+        <p className="testo-muted">
+          Nessuna email registrata per questo contatto: comparirà qui non appena verrà inviata o ricevuta
+          un'email tracciata.
+        </p>
       ) : (
         <table className="tabella-dati">
           <thead>
@@ -138,7 +141,7 @@ function DettaglioContatto() {
 
       <h2>Richiami ({dettaglio.richiami.length})</h2>
       {dettaglio.richiami.length === 0 ? (
-        <p className="testo-muted">Nessun richiamo pianificato.</p>
+        <p className="testo-muted">Nessun richiamo pianificato per questo contatto al momento.</p>
       ) : (
         <ul className="lista-richiami">
           {dettaglio.richiami.map((r) => (

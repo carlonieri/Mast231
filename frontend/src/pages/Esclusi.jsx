@@ -18,7 +18,7 @@ function Esclusi() {
     <section>
       <div className="section-header">
         <h1>Esclusi / rimossi</h1>
-        <a className="btn btn-secondario" href={exportEsclusioniUrl()}>
+        <a className="btn" href={exportEsclusioniUrl()}>
           Esporta Excel
         </a>
       </div>

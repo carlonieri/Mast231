@@ -45,7 +45,7 @@ function NuovoUtenteForm({ onCreato }) {
           <option value="operatore">Operatore</option>
           <option value="titolare">Titolare</option>
         </select>
-        <button type="submit" className="btn btn-secondario" disabled={inCorso}>
+        <button type="submit" className="btn btn-primario" disabled={inCorso}>
           {inCorso ? 'Creazione…' : 'Crea account'}
         </button>
       </div>

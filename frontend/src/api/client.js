@@ -1,20 +1,37 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
+// Estrae dalla risposta un messaggio utile: quello del backend se c'è (già
+// specifico, es. "Credenziali non valide."), altrimenti uno generico — a cui,
+// solo per errori 5xx (guasto imprevisto, non un dato sbagliato inserito
+// dall'operatore), si aggiunge sempre lo stesso suggerimento pratico. Un solo
+// punto per questa regola, invece di ripeterla in ogni pagina.
+async function estraiMessaggioErrore(res) {
+  let message = `Il server ha risposto con un errore (${res.status}).`;
+  try {
+    const body = await res.json();
+    if (body.message) message = body.message;
+  } catch {
+    // corpo non JSON: si mantiene il messaggio generico
+  }
+  if (res.status >= 500) {
+    message += " Riprova tra poco; se il problema persiste, contatta l'assistenza tecnica.";
+  }
+  return message;
+}
+
 async function request(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    credentials: 'include', // manda/riceve il cookie di sessione (login)
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      credentials: 'include', // manda/riceve il cookie di sessione (login)
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    });
+  } catch {
+    throw new Error('Impossibile contattare il server. Verifica di essere connesso e riprova.');
+  }
   if (!res.ok) {
-    let message = `Errore ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body.message) message = body.message;
-    } catch {
-      // corpo non JSON: si mantiene il messaggio generico
-    }
-    const errore = new Error(message);
+    const errore = new Error(await estraiMessaggioErrore(res));
     errore.status = res.status;
     throw errore;
   }
@@ -113,21 +130,17 @@ export function generaRichiamoZona({ citta, regione }) {
 // forzare Content-Type: application/json (il browser imposta da solo il
 // boundary corretto quando il body è un FormData).
 export async function caricaLista(formData) {
-  const res = await fetch(`${API_BASE}/api/caricamenti`, {
-    method: 'POST',
-    credentials: 'include',
-    body: formData,
-  });
-  if (!res.ok) {
-    let message = `Errore ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body.message) message = body.message;
-    } catch {
-      // corpo non JSON: si mantiene il messaggio generico
-    }
-    throw new Error(message);
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/caricamenti`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+  } catch {
+    throw new Error('Impossibile contattare il server. Verifica di essere connesso e riprova.');
   }
+  if (!res.ok) throw new Error(await estraiMessaggioErrore(res));
   return res.json();
 }
 

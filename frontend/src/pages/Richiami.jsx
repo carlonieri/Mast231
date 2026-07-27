@@ -56,7 +56,12 @@ function Richiami() {
 
       {caricamento && <p>Caricamento…</p>}
       {errore && <p className="testo-errore">{errore}</p>}
-      {!caricamento && !errore && richiami.length === 0 && <p className="testo-muted">Nessun richiamo da evadere.</p>}
+      {!caricamento && !errore && richiami.length === 0 && (
+        <p className="testo-muted">
+          Nessun richiamo da evadere al momento. Ne comparirà uno qui quando un lead risponde in modo interessato, o
+          non risponde entro la soglia configurata.
+        </p>
+      )}
 
       {!caricamento && !errore && richiami.length > 0 && (
         <table className="tabella-dati">

@@ -100,7 +100,7 @@ function AssistenteChat() {
               disabled={caricamento}
               aria-label="Scrivi una domanda per l'assistente"
             />
-            <button type="submit" className="btn btn-secondario" disabled={caricamento || !testo.trim()}>
+            <button type="submit" className="btn btn-primario" disabled={caricamento || !testo.trim()}>
               Invia
             </button>
           </form>

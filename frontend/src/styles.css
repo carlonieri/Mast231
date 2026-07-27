@@ -2,7 +2,12 @@
    accento (nessun altro colore decorativo) — vedi README per i valori e i
    controlli di contrasto. I quattro --status-* restano rossi/ambra/verde di
    proposito (eccezione funzionale concordata: segnali critici/avviso/errore
-   restano leggibili a colpo d'occhio, non sono "accenti" del brand). */
+   restano leggibili a colpo d'occhio, non sono "accenti" del brand).
+
+   Sistema di design: due font (titoli vs corpo/dati — vedi main.jsx per il
+   caricamento), una scala di 3 raggi, una scala di 6 spaziature. Poche
+   scelte, ripetute sempre uguali: niente valori "a occhio" nel resto del
+   foglio di stile. */
 :root {
   color-scheme: light;
   --surface-1: #ffffff;
@@ -23,6 +28,25 @@
   --status-warning: #fab219;
   --status-serious: #ec835a;
   --status-critical: #d03b3b;
+
+  /* Titoli: IBM Plex Sans (carattere leggermente tecnico, adatto a un tool
+     di compliance). Corpo/dati/tabelle: Public Sans (disegnato per leggere
+     molta informazione densa a lungo senza affaticare, cifre tabellari). */
+  --font-heading: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius-sm: 6px;   /* controlli: pulsanti, input, select */
+  --radius-md: 10px;  /* contenitori: card, pannelli, tabelle */
+  --radius-pill: 999px; /* solo badge di stato */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --transition-fast: 120ms ease;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -67,9 +91,17 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   background: var(--page-plane);
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.app-titolo {
+  font-family: var(--font-heading);
 }
 
 .app-shell {
@@ -81,17 +113,17 @@ body {
 .app-header {
   background: var(--surface-1);
   border-bottom: 1px solid var(--border);
-  padding: 12px 24px;
+  padding: var(--space-3) var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .app-titolo-riga {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .app-titolo {
@@ -102,7 +134,7 @@ body {
 .app-utente {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
@@ -110,22 +142,28 @@ body {
 .app-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .nav-link {
   color: var(--text-secondary);
   text-decoration: none;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .nav-link:hover {
   background: var(--page-plane);
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .nav-link-attivo {
@@ -133,10 +171,14 @@ body {
   color: #ffffff;
 }
 
+.nav-link-attivo:hover {
+  background: var(--accent);
+}
+
 .badge-richiami {
   background: var(--status-critical);
   color: #ffffff;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.7rem;
   padding: 1px 7px;
   font-weight: 700;
@@ -144,7 +186,7 @@ body {
 
 .app-main {
   flex: 1;
-  padding: 24px;
+  padding: var(--space-5);
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
@@ -154,34 +196,36 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 h1 {
   font-size: 1.4rem;
+  font-weight: 700;
   margin: 0;
 }
 
 h2 {
   font-size: 1.1rem;
-  margin: 28px 0 10px;
+  font-weight: 600;
+  margin: var(--space-6) 0 var(--space-2);
 }
 
 .filtri-riga {
   display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
   flex-wrap: wrap;
 }
 
 .riquadro-richiamo-zona {
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
   font-size: 0.9rem;
 }
 
@@ -189,62 +233,118 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
 .riquadro-richiamo-zona p {
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
 }
 
-.filtri-riga select,
-.filtri-riga input[type='text'] {
-  padding: 6px 10px;
-  border-radius: 6px;
+/* Base condivisa per tutti i campi testuali e i select: un solo posto da
+   cui derivano bordo, raggio, sfondo e stato di focus — non più ripetuti
+   per ogni singolo componente del form. */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+select {
+  font-family: var(--font-body);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+select:focus,
+input[type='text']:focus-visible,
+input[type='email']:focus-visible,
+input[type='password']:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 
 .filtri-riga input[type='file'] {
   color: var(--text-primary);
+  font-family: var(--font-body);
 }
 
 .riepilogo-caricamento {
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 
 .filtro-checkbox {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
   color: var(--text-secondary);
 }
 
 .btn {
-  display: inline-block;
-  padding: 7px 14px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-primary);
   text-decoration: none;
+  font-family: var(--font-body);
   font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .btn:hover {
   background: var(--page-plane);
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Gerarchia a tre livelli: primario (un'unica azione per schermata),
+   secondario (azione rilevante ma non l'unica), terziario (il default
+   .btn sopra — azioni di contorno: Esporta Excel, Segna evaso, Disattiva). */
+.btn-primario {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-primario:hover {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+
 .btn-secondario {
+  background: transparent;
   border-color: var(--accent);
   color: var(--accent);
 }
 
+.btn-secondario:hover {
+  background: var(--accent-tint);
+}
+
 .btn-piccolo {
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2);
   font-size: 0.82rem;
 }
 
@@ -253,7 +353,7 @@ h2 {
   border-collapse: collapse;
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   font-size: 0.9rem;
 }
@@ -261,7 +361,7 @@ h2 {
 .tabella-dati th,
 .tabella-dati td {
   text-align: left;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--gridline);
 }
 
@@ -271,6 +371,14 @@ h2 {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+
+.tabella-dati tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.tabella-dati tbody tr:hover {
+  background: var(--accent-tint);
 }
 
 .tabella-dati tbody tr:last-child td {
@@ -296,8 +404,8 @@ h2 {
 
 .badge {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -330,7 +438,7 @@ h2 {
 
 .link-indietro {
   display: inline-block;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.88rem;
@@ -344,14 +452,14 @@ h2 {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
-  margin: 14px 0;
+  gap: var(--space-1);
+  margin: var(--space-3) 0;
 }
 
 .percorso-stato-riga {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .percorso-stato-tappa {
@@ -381,12 +489,12 @@ h2 {
 .scheda-contatto {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin: var(--space-4) 0;
 }
 
 .scheda-contatto dt {
@@ -405,25 +513,17 @@ h2 {
   background: rgba(250, 178, 25, 0.14);
   border: 1px solid var(--status-warning);
   color: var(--text-primary);
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
   font-size: 0.9rem;
 }
 
 .cambia-stato {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.cambia-stato select {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  color: var(--text-primary);
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .lista-richiami {
@@ -432,29 +532,29 @@ h2 {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .lista-richiami li {
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
   font-size: 0.9rem;
 }
 
 .griglia-stat-tile {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
 .stat-tile {
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
 }
 
 .stat-tile-valore {
@@ -480,9 +580,9 @@ h2 {
 .grafico-andamento {
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .grafico-andamento svg {
@@ -508,9 +608,9 @@ h2 {
 
 .legenda-grafico {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: var(--space-2);
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
@@ -518,7 +618,7 @@ h2 {
 .legenda-voce {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 .legenda-pallino {
@@ -528,6 +628,8 @@ h2 {
   display: inline-block;
 }
 
+/* Ombre riservate a ciò che galleggia sopra la pagina (questo widget) — mai
+   su card, tabelle o pulsanti: è un segnale di elevazione, non decorazione. */
 .assistente-widget {
   position: fixed;
   bottom: 20px;
@@ -536,7 +638,7 @@ h2 {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .assistente-bottone-flottante {
@@ -550,6 +652,11 @@ h2 {
   line-height: 1;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: background var(--transition-fast);
+}
+
+.assistente-bottone-flottante:hover {
+  background: var(--accent-dark);
 }
 
 .assistente-pannello {
@@ -557,7 +664,7 @@ h2 {
   max-height: 440px;
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
@@ -568,7 +675,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: var(--space-2) var(--space-3);
   background: var(--accent);
   color: #ffffff;
   font-weight: 600;
@@ -588,37 +695,38 @@ h2 {
 .assistente-messaggi {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   min-height: 180px;
 }
 
 .assistente-suggerimenti {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 .assistente-suggerimento {
   text-align: left;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--page-plane);
   color: var(--text-primary);
   font-size: 0.85rem;
   cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
 .assistente-suggerimento:hover {
-  background: var(--surface-1);
+  background: var(--accent-tint);
 }
 
 .assistente-bolla {
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
   font-size: 0.87rem;
   max-width: 85%;
   white-space: pre-wrap;
@@ -639,18 +747,13 @@ h2 {
 
 .assistente-input-riga {
   display: flex;
-  gap: 6px;
-  padding: 10px;
+  gap: var(--space-1);
+  padding: var(--space-2);
   border-top: 1px solid var(--border);
 }
 
 .assistente-input-riga input {
   flex: 1;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  color: var(--text-primary);
 }
 
 .pagina-login {
@@ -659,9 +762,9 @@ h2 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: var(--space-5);
   background: var(--page-plane);
-  padding: 24px;
+  padding: var(--space-5);
 }
 
 .scheda-login {
@@ -669,11 +772,11 @@ h2 {
   max-width: 340px;
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 28px;
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .scheda-login h1 {
@@ -684,35 +787,26 @@ h2 {
 .scheda-login label {
   font-size: 0.85rem;
   color: var(--text-secondary);
-  margin-top: 6px;
+  margin-top: var(--space-1);
 }
 
 .scheda-login input {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
   background: var(--page-plane);
-  color: var(--text-primary);
 }
 
 .scheda-login button {
-  margin-top: 10px;
+  margin-top: var(--space-2);
 }
 
 .azioni-utente,
 .azioni-richiamo {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
   flex-wrap: wrap;
 }
 
 .azioni-utente input[type='password'] {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  color: var(--text-primary);
   width: 140px;
 }
 
@@ -720,8 +814,8 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 16px 24px;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
   color: var(--text-muted);
   font-size: 0.76rem;
 }

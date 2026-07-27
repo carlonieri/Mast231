@@ -58,7 +58,7 @@ function Login() {
 
         {errore && <p className="testo-errore">{errore}</p>}
 
-        <button type="submit" className="btn btn-secondario" disabled={inCorso}>
+        <button type="submit" className="btn btn-primario" disabled={inCorso}>
           {inCorso ? 'Accesso…' : 'Accedi'}
         </button>
       </form>

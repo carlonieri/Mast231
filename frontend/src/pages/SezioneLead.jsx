@@ -36,7 +36,7 @@ function RichiamoZona({ citta, regione }) {
           <strong>Richiamo per zona:</strong> genera una bozza email con i contatti "senza risposta" di{' '}
           <em>{etichettaZona}</em> già inseriti in CCN, pronta da aprire in Outlook.
         </div>
-        <button type="button" className="btn btn-secondario" onClick={genera} disabled={inCorso || !zonaScelta}>
+        <button type="button" className="btn btn-primario" onClick={genera} disabled={inCorso || !zonaScelta}>
           {inCorso ? 'Generazione…' : 'Genera bozza richiamo'}
         </button>
       </div>
@@ -90,7 +90,7 @@ function SezioneLead({ titolo, stati, mostraRichiamoZona = false }) {
     <section>
       <div className="section-header">
         <h1>{titolo}</h1>
-        <a className="btn btn-secondario" href={exportLeadUrl({ stato: statoParam, citta, regione })}>
+        <a className="btn" href={exportLeadUrl({ stato: statoParam, citta, regione })}>
           Esporta Excel
         </a>
       </div>
@@ -118,7 +118,12 @@ function SezioneLead({ titolo, stati, mostraRichiamoZona = false }) {
 
       {caricamento && <p>Caricamento…</p>}
       {errore && <p className="testo-errore">{errore}</p>}
-      {!caricamento && !errore && leads.length === 0 && <p className="testo-muted">Nessun contatto in questa sezione.</p>}
+      {!caricamento && !errore && leads.length === 0 && (
+        <p className="testo-muted">
+          Nessun contatto qui al momento — questa lista si aggiorna da sola man mano che carichi nuovi indirizzi
+          (sezione "Carica lista") e arrivano risposte.
+        </p>
+      )}
 
       {!caricamento && !errore && leads.length > 0 && (
         <table className="tabella-dati">
