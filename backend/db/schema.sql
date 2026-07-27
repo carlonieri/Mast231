@@ -64,8 +64,14 @@ CREATE TABLE email_events (
   lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
   direzione TEXT NOT NULL CHECK (direzione IN ('inviata', 'ricevuta')),
   data TIMESTAMPTZ NOT NULL,
-  oggetto TEXT,
-  categoria TEXT,                -- assegnata da Claude
+  oggetto TEXT,                  -- oggetto reale dell'email, letto dall'header IMAP
+  categoria TEXT,                -- assegnata da Claude (per 'ricevuta': l'etichetta di classificazione)
+  -- Solo per 'ricevuta' con una classificazione umana (non bounce/risposta
+  -- automatica, per cui Claude non viene interpellato): sintesi in una riga
+  -- del contenuto concreto della risposta, generata da Claude nella stessa
+  -- chiamata di classifyReply — vedi claude.service.js. NULL per 'inviata'
+  -- (lì l'oggetto reale è già sufficiente) e per bounce/auto-reply.
+  sintesi TEXT,
   fonte TEXT NOT NULL CHECK (fonte IN ('sent_items', 'inbox')),
   message_id TEXT,               -- header Message-ID IMAP, per evitare doppioni sui poll successivi
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -34,7 +34,12 @@ const LEADS = [
     regione: 'Emilia-Romagna',
     stato: 'interessato',
     inviata: { giorniFa: 6, oggetto: 'Servizi di consulenza antiriciclaggio D.Lgs 231/2007', categoria: 'Antiriciclaggio D.Lgs 231/2007' },
-    ricevuta: { giorniFa: 5, oggetto: 'Re: Servizi di consulenza antiriciclaggio D.Lgs 231/2007', categoria: 'interessato' },
+    ricevuta: {
+      giorniFa: 5,
+      oggetto: 'Re: Servizi di consulenza antiriciclaggio D.Lgs 231/2007',
+      categoria: 'interessato',
+      sintesi: 'Chiede un preventivo dettagliato per il proprio studio.',
+    },
     richiamo: {
       giorniFa: 0,
       motivo: 'Lead interessato — contattare (oggetto: "Re: Servizi di consulenza antiriciclaggio D.Lgs 231/2007")',
@@ -48,7 +53,12 @@ const LEADS = [
     regione: 'Lombardia',
     stato: 'non_interessato',
     inviata: { giorniFa: 12, oggetto: 'GDPR e adeguamento privacy per studi professionali', categoria: 'GDPR privacy' },
-    ricevuta: { giorniFa: 10, oggetto: 'Re: GDPR e adeguamento privacy per studi professionali', categoria: 'non_interessato' },
+    ricevuta: {
+      giorniFa: 10,
+      oggetto: 'Re: GDPR e adeguamento privacy per studi professionali',
+      categoria: 'non_interessato',
+      sintesi: 'Non interessato: ha già un consulente per l\'ambito GDPR.',
+    },
   },
   {
     email: 'commercialista.ferrari@demo-consulenza.it',
@@ -81,7 +91,12 @@ const LEADS = [
     regione: 'Campania',
     stato: 'acquisito',
     inviata: { giorniFa: 70, oggetto: 'GDPR e adeguamento privacy per studi professionali', categoria: 'GDPR privacy' },
-    ricevuta: { giorniFa: 68, oggetto: 'Re: GDPR e adeguamento privacy per studi professionali', categoria: 'interessato' },
+    ricevuta: {
+      giorniFa: 68,
+      oggetto: 'Re: GDPR e adeguamento privacy per studi professionali',
+      categoria: 'interessato',
+      sintesi: 'Interessato, poi diventato cliente effettivo.',
+    },
   },
   {
     email: 'commercialista.blu@demo-consulenza.it',
@@ -90,7 +105,12 @@ const LEADS = [
     regione: 'Emilia-Romagna',
     stato: 'interessato',
     inviata: { giorniFa: 2, oggetto: 'Whistleblowing: obblighi normativi 2026', categoria: 'Whistleblowing' },
-    ricevuta: { giorniFa: 1, oggetto: 'Re: Whistleblowing: obblighi normativi 2026', categoria: 'interessato' },
+    ricevuta: {
+      giorniFa: 1,
+      oggetto: 'Re: Whistleblowing: obblighi normativi 2026',
+      categoria: 'interessato',
+      sintesi: 'Chiede maggiori informazioni sugli obblighi whistleblowing.',
+    },
     richiamo: { giorniFa: 0, motivo: 'Lead interessato — contattare (oggetto: "Re: Whistleblowing: obblighi normativi 2026")' },
   },
   {
@@ -159,9 +179,9 @@ async function inserisciLead(pool, lead, titolareId) {
   }
   if (lead.ricevuta) {
     await pool.query(
-      `INSERT INTO email_events (lead_id, direzione, data, oggetto, categoria, fonte)
-       VALUES ($1, 'ricevuta', $2, $3, $4, 'inbox')`,
-      [leadId, giorniFa(lead.ricevuta.giorniFa), lead.ricevuta.oggetto, lead.ricevuta.categoria]
+      `INSERT INTO email_events (lead_id, direzione, data, oggetto, categoria, sintesi, fonte)
+       VALUES ($1, 'ricevuta', $2, $3, $4, $5, 'inbox')`,
+      [leadId, giorniFa(lead.ricevuta.giorniFa), lead.ricevuta.oggetto, lead.ricevuta.categoria, lead.ricevuta.sintesi || null]
     );
   }
   if (lead.richiamo) {

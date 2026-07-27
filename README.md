@@ -116,7 +116,13 @@ autonoma prevista dalla spec: il lead viene cancellato e l'indirizzo escluso
 in modo permanente). Se "interessato", crea un task da evadere in `follow_up`,
 non assegnato a nessuno (il job gira in background, senza un operatore
 collegato): un operatore lo prende in carico da "Richiami" assegnandoselo.
-Rieseguibile senza duplicare eventi già loggati.
+Nella stessa chiamata a Claude che classifica la risposta, viene generata
+anche una **sintesi in una riga** del contenuto concreto (es. "Chiede un
+preventivo per 3 sedi entro fine mese"), salvata in `email_events.sintesi` e
+mostrata nella timeline del dettaglio contatto — non solo l'etichetta di
+classificazione. Nessuna sintesi per bounce/risposte automatiche (Claude non
+viene interpellato in quei casi). Rieseguibile senza duplicare eventi già
+loggati.
 
 ```bash
 npm run job:log-replies
@@ -250,7 +256,10 @@ L'app parte su `http://localhost:5173` e richiede il backend attivo su `http://l
   (requisito #8, vedi sopra).
 - **Dettaglio contatto** (`/contatti/:id`) — storico email completo, richiami collegati,
   avviso anti-duplicazione (requisito #2) se l'ultimo contatto risale a meno di 7 giorni,
-  cambio stato manuale.
+  cambio stato manuale. La timeline mostra, per ogni evento, il contenuto concreto e non solo
+  l'etichetta: l'oggetto reale per le email inviate, la sintesi in una riga generata da Claude
+  per le risposte ricevute (fallback all'oggetto grezzo per bounce/risposte automatiche, dove
+  non c'è sintesi).
 - **Dashboard** (`/dashboard`) — andamento mensile con grafico + tabella dati.
 - **Richiami** (`/richiami`) — task da evadere (`follow_up`), con l'indicatore dei richiami
   del giorno sempre visibile nella barra di navigazione e l'assegnazione ("Prendi in carico")

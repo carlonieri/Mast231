@@ -47,12 +47,12 @@ async function findLeadForMessage(message, tipo) {
   return senderEmail ? findLeadByEmail(senderEmail) : null;
 }
 
-async function logInboxEvent({ leadId, message, categoria }) {
+async function logInboxEvent({ leadId, message, categoria, sintesi }) {
   await getPool().query(
-    `INSERT INTO email_events (lead_id, direzione, data, oggetto, categoria, fonte, message_id)
-     VALUES ($1, 'ricevuta', $2, $3, $4, 'inbox', $5)
+    `INSERT INTO email_events (lead_id, direzione, data, oggetto, categoria, sintesi, fonte, message_id)
+     VALUES ($1, 'ricevuta', $2, $3, $4, $5, 'inbox', $6)
      ON CONFLICT (message_id, lead_id) DO NOTHING`,
-    [leadId, message.data, message.oggetto, categoria, message.messageId]
+    [leadId, message.data, message.oggetto, categoria, sintesi || null, message.messageId]
   );
 }
 
@@ -78,8 +78,9 @@ async function processMessage(message) {
     return 'auto_reply';
   }
 
-  // Risposta umana: classificazione via Claude + routing.
-  const classificazione = await classifyReply({ oggetto: message.oggetto, corpo: message.corpo });
+  // Risposta umana: classificazione via Claude (+ sintesi in una riga, stessa
+  // chiamata) + routing.
+  const { classificazione, sintesi } = await classifyReply({ oggetto: message.oggetto, corpo: message.corpo });
 
   if (classificazione === 'rimozione') {
     await removeLeadForOptOut({
@@ -89,7 +90,7 @@ async function processMessage(message) {
     return 'rimozione';
   }
 
-  await logInboxEvent({ leadId: lead.id, message, categoria: classificazione });
+  await logInboxEvent({ leadId: lead.id, message, categoria: classificazione, sintesi });
   await applyReplyClassification({
     leadId: lead.id,
     classificazione,

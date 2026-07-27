@@ -141,7 +141,7 @@ async function getLeadDetail(id) {
   if (!lead) return null;
 
   const storicoResult = await getPool().query(
-    `SELECT id, direzione, data, oggetto, categoria, fonte, created_at
+    `SELECT id, direzione, data, oggetto, categoria, sintesi, fonte, created_at
      FROM email_events WHERE lead_id = $1 ORDER BY data DESC`,
     [id]
   );

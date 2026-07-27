@@ -97,25 +97,37 @@ const REPLY_CLASSIFICATION_SCHEMA = {
       enum: ['interessato', 'non_interessato', 'rimozione', 'ambiguo'],
       description: 'Categoria della risposta secondo le 4 classi definite dalla specifica.',
     },
+    sintesi: {
+      type: 'string',
+      description:
+        'Sintesi in una riga (in italiano, indicativamente sotto i 120 caratteri) di cosa dice o chiede concretamente il mittente in questa risposta — non una riformulazione della classificazione, ma il contenuto specifico. Esempi: "Chiede un preventivo per 3 sedi entro fine mese", "Ha già un consulente per l\'antiriciclaggio, ringrazia e saluta", "Chiede di essere ricontattato a settembre".',
+    },
   },
-  required: ['classificazione'],
+  required: ['classificazione', 'sintesi'],
   additionalProperties: false,
 };
 
 const REPLY_SYSTEM_PROMPT = [
   'Sei un assistente che classifica le risposte ricevute da prospect contattati da Mast Srls,',
-  'società di consulenza compliance (antiriciclaggio, GDPR, whistleblowing). Classifica la risposta',
-  'in una di queste 4 categorie, senza eccezioni:',
-  '- interessato: il mittente mostra interesse, ad esempio chiede un preventivo, maggiori informazioni o un appuntamento.',
-  '- non_interessato: il mittente dichiara esplicitamente di non essere interessato o di avere già un fornitore.',
-  '- rimozione: il mittente chiede esplicitamente di essere rimosso dalla lista o di non essere più contattato.',
-  '- ambiguo: la risposta non permette di capire chiaramente se il mittente sia interessato o meno.',
+  'società di consulenza compliance (antiriciclaggio, GDPR, whistleblowing). Per ogni risposta produci',
+  'due cose:',
+  '1. La classificazione, in una di queste 4 categorie, senza eccezioni:',
+  '   - interessato: il mittente mostra interesse, ad esempio chiede un preventivo, maggiori informazioni o un appuntamento.',
+  '   - non_interessato: il mittente dichiara esplicitamente di non essere interessato o di avere già un fornitore.',
+  '   - rimozione: il mittente chiede esplicitamente di essere rimosso dalla lista o di non essere più contattato.',
+  '   - ambiguo: la risposta non permette di capire chiaramente se il mittente sia interessato o meno.',
+  '2. Una sintesi in una riga di cosa dice/chiede concretamente il mittente (non una ripetizione della',
+  '   classificazione): serve a un operatore per capire a colpo d\'occhio il contenuto della risposta',
+  '   senza doverla riaprire.',
   "Questo testo è già stato filtrato a monte: non è un bounce né una risposta automatica di assenza,",
   'è una risposta scritta da una persona.',
 ].join(' ');
 
 // Classifica una risposta umana (già esclusi bounce e auto-reply a monte) in
-// una delle 4 categorie della spec. Resta SEMPRE in tempo reale (non passa
+// una delle 4 categorie della spec, più una sintesi in una riga del
+// contenuto concreto (stessa chiamata, stesso schema — vedi discussione con
+// l'utente: la timeline del dettaglio contatto deve mostrare cosa diceva la
+// risposta, non solo l'etichetta). Resta SEMPRE in tempo reale (non passa
 // dalla Batch API): alimenta il routing immediato di interessato/rimozione.
 // Vedi docs/mast231_gestionale_spec.md, requisito funzionale #4.
 async function classifyReply({ oggetto, corpo }) {
@@ -136,7 +148,7 @@ async function classifyReply({ oggetto, corpo }) {
 
   const textBlock = response.content.find((block) => block.type === 'text');
   const parsed = JSON.parse(textBlock.text);
-  return parsed.classificazione;
+  return { classificazione: parsed.classificazione, sintesi: parsed.sintesi };
 }
 
 module.exports = {

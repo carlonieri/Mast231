@@ -114,7 +114,7 @@ function DettaglioContatto() {
             <tr>
               <th>Data</th>
               <th>Direzione</th>
-              <th>Oggetto</th>
+              <th>Contenuto</th>
               <th>Categoria</th>
               <th>Fonte</th>
             </tr>
@@ -124,7 +124,7 @@ function DettaglioContatto() {
               <tr key={e.id}>
                 <td>{formatDataOra(e.data)}</td>
                 <td>{e.direzione === 'inviata' ? 'Inviata' : 'Ricevuta'}</td>
-                <td>{e.oggetto || '—'}</td>
+                <td>{(e.direzione === 'inviata' ? e.oggetto : e.sintesi || e.oggetto) || '—'}</td>
                 <td>{e.categoria || '—'}</td>
                 <td>{e.fonte === 'sent_items' ? 'Posta inviata' : 'Posta in arrivo'}</td>
               </tr>
