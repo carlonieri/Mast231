@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getLeadDetail, updateLeadStato } from '../api/client';
 import BadgeStato from '../components/BadgeStato';
+import PercorsoStato from '../components/PercorsoStato';
 import { formatData, formatDataOra, giorniDa } from '../utils/formato';
 
 const OPZIONI_STATO = ['da_contattare', 'contattato', 'interessato', 'non_interessato', 'senza_risposta', 'acquisito'];
@@ -55,6 +56,8 @@ function DettaglioContatto() {
         <h1>{dettaglio.nome || dettaglio.email}</h1>
         <BadgeStato stato={dettaglio.stato} />
       </div>
+
+      <PercorsoStato percorso={dettaglio.percorso_stato} />
 
       <dl className="scheda-contatto">
         <div>

@@ -1,5 +1,25 @@
 const { getPool } = require('../config/db');
 
+// Registra una transizione di leads.stato in lead_stato_storico, con la data
+// REALE del passaggio (non necessariamente "ora": es. la data di un'email
+// passata) — alimenta il percorso a stepper del dettaglio contatto. Chi
+// chiama deve passare esattamente lo stato appena scritto in leads.stato:
+// questa funzione non lo calcola né lo valida, si fida del chiamante. Ignora
+// silenziosamente se coincide con l'ultima transizione già registrata (evita
+// voci duplicate consecutive quando un cambiamento non è in realtà avvenuto,
+// es. una seconda risposta "interessato" dopo la prima).
+async function registraCambioStato({ leadId, stato, data, origine }) {
+  const ultimo = await getPool().query(
+    `SELECT stato FROM lead_stato_storico WHERE lead_id = $1 ORDER BY data DESC, id DESC LIMIT 1`,
+    [leadId]
+  );
+  if (ultimo.rows[0]?.stato === stato) return;
+  await getPool().query(
+    `INSERT INTO lead_stato_storico (lead_id, stato, data, origine) VALUES ($1, $2, $3, $4)`,
+    [leadId, stato, data || new Date(), origine]
+  );
+}
+
 // Crea il lead se non esiste (email non ancora vista), altrimenti aggiorna la
 // categoria/data dell'ultimo contatto. Lo stato passa a 'contattato' solo se
 // era 'da_contattare': non sovrascrive stati già assegnati da una risposta
@@ -13,10 +33,12 @@ async function upsertLeadForSentEmail({ email, data, categoria }) {
        ultima_categoria_email = EXCLUDED.ultima_categoria_email,
        ultima_data_contatto = EXCLUDED.ultima_data_contatto,
        updated_at = now()
-     RETURNING id`,
+     RETURNING id, stato`,
     [email, categoria, data]
   );
-  return result.rows[0].id;
+  const { id: leadId, stato } = result.rows[0];
+  await registraCambioStato({ leadId, stato, data, origine: 'automatico' });
+  return leadId;
 }
 
 async function findLeadByEmail(email) {
@@ -45,6 +67,10 @@ async function applyReplyClassification({ leadId, classificazione, data, categor
      WHERE id = $4`,
     [nuovoStato, categoria, data, leadId]
   );
+
+  if (nuovoStato) {
+    await registraCambioStato({ leadId, stato: nuovoStato, data, origine: 'automatico' });
+  }
 }
 
 // Applica la categoria risolta in modo asincrono (via Batch API, vedi
@@ -151,7 +177,14 @@ async function getLeadDetail(id) {
     [id]
   );
 
-  return { ...lead, storico: storicoResult.rows, richiami: richiamiResult.rows };
+  // Percorso a stepper (vedi registraCambioStato): ordine cronologico
+  // crescente, dalla prima transizione all'attuale.
+  const percorsoResult = await getPool().query(
+    `SELECT stato, data, origine FROM lead_stato_storico WHERE lead_id = $1 ORDER BY data ASC, id ASC`,
+    [id]
+  );
+
+  return { ...lead, storico: storicoResult.rows, richiami: richiamiResult.rows, percorso_stato: percorsoResult.rows };
 }
 
 const STATI_VALIDI = [
@@ -176,10 +209,14 @@ async function updateLeadStato(id, stato) {
     `UPDATE leads SET stato = $1, updated_at = now() WHERE id = $2 RETURNING *`,
     [stato, id]
   );
+  if (result.rows[0]) {
+    await registraCambioStato({ leadId: id, stato, data: new Date(), origine: 'manuale' });
+  }
   return result.rows[0] || null;
 }
 
 module.exports = {
+  registraCambioStato,
   upsertLeadForSentEmail,
   findLeadByEmail,
   applyReplyClassification,

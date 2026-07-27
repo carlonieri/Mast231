@@ -1,6 +1,7 @@
 const { getPool } = require('../config/db');
 const { parseUploadedFile, isValidEmail } = require('./upload-parser.service');
 const { generateDraftsForBatches } = require('./imap-draft.service');
+const { registraCambioStato } = require('./leads.service');
 const { chunk } = require('../utils/chunk');
 
 const DEFAULT_BATCH_SIZE = 150;
@@ -60,17 +61,34 @@ function valutaLeadEsistente(leadEsistente, sogliaRecenteGiorni) {
 // fonte dati più aggiornata), altrimenti mantiene quelli già salvati. Lo
 // stato non viene mai toccato qui: un ricaricamento non deve far regredire
 // un lead già in uno stato più avanzato (interessato, senza_risposta, ecc.).
+// SELECT preliminare (non un ON CONFLICT unico) apposta: solo così sappiamo
+// con certezza se questo è un lead nuovo, per registrare 'da_contattare' nel
+// percorso stato SOLO alla vera creazione — mai su un ricaricamento, che qui
+// non tocca lo stato.
 async function upsertLeadFromUpload({ email, nome, citta, regione, caricamentoId }) {
+  const esistente = await getPool().query('SELECT id FROM leads WHERE email = $1', [email]);
+
+  if (esistente.rows.length === 0) {
+    const result = await getPool().query(
+      `INSERT INTO leads (email, nome, citta, regione, caricamento_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, created_at`,
+      [email, nome, citta, regione, caricamentoId]
+    );
+    const { id: leadId, created_at: dataCreazione } = result.rows[0];
+    await registraCambioStato({ leadId, stato: 'da_contattare', data: dataCreazione, origine: 'automatico' });
+    return;
+  }
+
   await getPool().query(
-    `INSERT INTO leads (email, nome, citta, regione, caricamento_id)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (email) DO UPDATE SET
-       nome = COALESCE(EXCLUDED.nome, leads.nome),
-       citta = COALESCE(EXCLUDED.citta, leads.citta),
-       regione = COALESCE(EXCLUDED.regione, leads.regione),
-       caricamento_id = EXCLUDED.caricamento_id,
-       updated_at = now()`,
-    [email, nome, citta, regione, caricamentoId]
+    `UPDATE leads SET
+       nome = COALESCE($1, nome),
+       citta = COALESCE($2, citta),
+       regione = COALESCE($3, regione),
+       caricamento_id = $4,
+       updated_at = now()
+     WHERE id = $5`,
+    [nome, citta, regione, caricamentoId, esistente.rows[0].id]
   );
 }
 

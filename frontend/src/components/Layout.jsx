@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { getFollowUp } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import AssistenteChat from './AssistenteChat';
+import Footer from './Footer';
 
 const SEZIONI = [
   { path: '/acquisiti', label: 'Acquisiti' },
@@ -71,6 +72,7 @@ function Layout() {
       <main className="app-main">
         <Outlet />
       </main>
+      <Footer />
       <AssistenteChat />
     </div>
   );

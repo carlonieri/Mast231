@@ -59,6 +59,24 @@ CREATE TABLE leads (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Un record per ogni transizione REALE di leads.stato (mai sovrascritto, a
+-- differenza di leads.stato/updated_at che tengono solo il valore attuale):
+-- alimenta il percorso a stepper nella vista dettaglio contatto, che deve
+-- riflettere le date vere dei passaggi di questo specifico contatto, non solo
+-- lo stato attuale. Scritto da leads.service.js:registraCambioStato, l'unico
+-- punto che vi inserisce righe — ogni funzione che cambia leads.stato lo
+-- richiama subito dopo. 'origine' distingue i cambi dedotti dagli eventi
+-- email (job automatici) da quelli impostati a mano da un operatore.
+CREATE TABLE lead_stato_storico (
+  id SERIAL PRIMARY KEY,
+  lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  stato TEXT NOT NULL,
+  data TIMESTAMPTZ NOT NULL,
+  origine TEXT NOT NULL DEFAULT 'automatico' CHECK (origine IN ('automatico', 'manuale')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_lead_stato_storico_lead ON lead_stato_storico(lead_id, data);
+
 CREATE TABLE email_events (
   id SERIAL PRIMARY KEY,
   lead_id INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,

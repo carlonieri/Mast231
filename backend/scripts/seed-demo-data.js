@@ -13,6 +13,7 @@
 require('dotenv').config();
 const { getPool } = require('../src/config/db');
 const { creaUtente } = require('../src/services/auth.service');
+const { registraCambioStato } = require('../src/services/leads.service');
 
 // Password identiche e semplici: solo per la demo locale, mai usarle altrove.
 const UTENTI_DEMO = [
@@ -45,6 +46,11 @@ const LEADS = [
       motivo: 'Lead interessato — contattare (oggetto: "Re: Servizi di consulenza antiriciclaggio D.Lgs 231/2007")',
       assegnaTitolare: true,
     },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 8 },
+      { stato: 'contattato', giorniFa: 6 },
+      { stato: 'interessato', giorniFa: 5 },
+    ],
   },
   {
     email: 'info@studioverdi-demo.it',
@@ -59,6 +65,11 @@ const LEADS = [
       categoria: 'non_interessato',
       sintesi: 'Non interessato: ha già un consulente per l\'ambito GDPR.',
     },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 14 },
+      { stato: 'contattato', giorniFa: 12 },
+      { stato: 'non_interessato', giorniFa: 10 },
+    ],
   },
   {
     email: 'commercialista.ferrari@demo-consulenza.it',
@@ -67,6 +78,10 @@ const LEADS = [
     regione: 'Lazio',
     stato: 'contattato',
     inviata: { giorniFa: 3, oggetto: 'Whistleblowing: obblighi normativi 2026', categoria: 'Whistleblowing' },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 5 },
+      { stato: 'contattato', giorniFa: 3 },
+    ],
   },
   {
     email: 'notaio.gialli@demo-notariato.it',
@@ -74,6 +89,7 @@ const LEADS = [
     citta: 'Firenze',
     regione: 'Toscana',
     stato: 'da_contattare',
+    percorso: [{ stato: 'da_contattare', giorniFa: 2 }],
   },
   {
     email: 'studio.neri@demo-legale.it',
@@ -83,6 +99,11 @@ const LEADS = [
     stato: 'senza_risposta',
     inviata: { giorniFa: 15, oggetto: 'Servizi di consulenza antiriciclaggio D.Lgs 231/2007', categoria: 'Antiriciclaggio D.Lgs 231/2007' },
     richiamo: { giorniFa: 0, motivo: 'Nessuna risposta da oltre 7 giorni — richiamare' },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 17 },
+      { stato: 'contattato', giorniFa: 15 },
+      { stato: 'senza_risposta', giorniFa: 0 },
+    ],
   },
   {
     email: 'avv.rossi@demo-legale.it',
@@ -97,6 +118,12 @@ const LEADS = [
       categoria: 'interessato',
       sintesi: 'Interessato, poi diventato cliente effettivo.',
     },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 72 },
+      { stato: 'contattato', giorniFa: 70 },
+      { stato: 'interessato', giorniFa: 68 },
+      { stato: 'acquisito', giorniFa: 30, origine: 'manuale' },
+    ],
   },
   {
     email: 'commercialista.blu@demo-consulenza.it',
@@ -112,6 +139,11 @@ const LEADS = [
       sintesi: 'Chiede maggiori informazioni sugli obblighi whistleblowing.',
     },
     richiamo: { giorniFa: 0, motivo: 'Lead interessato — contattare (oggetto: "Re: Whistleblowing: obblighi normativi 2026")' },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 4 },
+      { stato: 'contattato', giorniFa: 2 },
+      { stato: 'interessato', giorniFa: 1 },
+    ],
   },
   {
     email: 'info@studiorosa-demo.it',
@@ -121,6 +153,11 @@ const LEADS = [
     stato: 'senza_risposta',
     inviata: { giorniFa: 20, oggetto: 'GDPR e adeguamento privacy per studi professionali', categoria: 'GDPR privacy' },
     richiamo: { giorniFa: -2, motivo: 'Nessuna risposta da oltre 7 giorni — richiamare' },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 22 },
+      { stato: 'contattato', giorniFa: 20 },
+      { stato: 'senza_risposta', giorniFa: 5 },
+    ],
   },
   {
     email: 'consulente.marroni@demo-consulenza.it',
@@ -130,6 +167,10 @@ const LEADS = [
     stato: 'contattato',
     inviata: { giorniFa: 4, oggetto: 'Servizi di consulenza antiriciclaggio D.Lgs 231/2007', categoria: 'Antiriciclaggio D.Lgs 231/2007' },
     ricevuta: { giorniFa: 3, oggetto: 'Undelivered Mail Returned to Sender', categoria: 'bounce' },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 6 },
+      { stato: 'contattato', giorniFa: 4 },
+    ],
   },
   {
     email: 'avv.conti@demo-legale.it',
@@ -139,6 +180,10 @@ const LEADS = [
     stato: 'contattato',
     inviata: { giorniFa: 5, oggetto: 'Whistleblowing: obblighi normativi 2026', categoria: 'Whistleblowing' },
     ricevuta: { giorniFa: 4, oggetto: 'Risposta automatica: Whistleblowing: obblighi normativi 2026', categoria: 'risposta_automatica_assenza' },
+    percorso: [
+      { stato: 'da_contattare', giorniFa: 7 },
+      { stato: 'contattato', giorniFa: 5 },
+    ],
   },
 ];
 
@@ -190,6 +235,18 @@ async function inserisciLead(pool, lead, titolareId) {
        VALUES ($1, $2, $3, 'da_fare', $4)`,
       [leadId, giorniFa(lead.richiamo.giorniFa), lead.richiamo.motivo, lead.richiamo.assegnaTitolare ? titolareId : null]
     );
+  }
+
+  // Percorso stato: le stesse date reali già usate sopra per invii/risposte,
+  // non indovinate — alimenta lo stepper del dettaglio contatto.
+  for (const tappa of lead.percorso || []) {
+    // eslint-disable-next-line no-await-in-loop
+    await registraCambioStato({
+      leadId,
+      stato: tappa.stato,
+      data: giorniFa(tappa.giorniFa),
+      origine: tappa.origine || 'automatico',
+    });
   }
 }
 

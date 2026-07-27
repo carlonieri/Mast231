@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const { getPool } = require('../config/db');
 const { createFollowUp } = require('../services/follow-up.service');
+const { registraCambioStato } = require('../services/leads.service');
 
 // Passaggio a "senza risposta" per chi non ha risposto entro N giorni
 // configurabili, con data di richiamo suggerita. Job separato e indipendente
@@ -30,10 +31,13 @@ async function runFlagNoResponseLeadsJob({ soglia } = {}) {
 
   let aggiornati = 0;
   for (const lead of result.rows) {
+    const dataTransizione = new Date();
     // eslint-disable-next-line no-await-in-loop
     await getPool().query(`UPDATE leads SET stato = 'senza_risposta', updated_at = now() WHERE id = $1`, [
       lead.id,
     ]);
+    // eslint-disable-next-line no-await-in-loop
+    await registraCambioStato({ leadId: lead.id, stato: 'senza_risposta', data: dataTransizione, origine: 'automatico' });
     // eslint-disable-next-line no-await-in-loop
     await createFollowUp({
       leadId: lead.id,

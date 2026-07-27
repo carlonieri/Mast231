@@ -230,6 +230,27 @@ carico" nella pagina Richiami (`PATCH /api/follow-up/:id/prendi-in-carico`,
 usa l'utente della sessione corrente) — solo auto-assegnazione, nessuna
 riassegnazione ad altri.
 
+### Percorso stato (storico transizioni)
+
+`leads.stato`/`updated_at` tengono solo il valore attuale: non bastano per
+ricostruire QUANDO un contatto è passato da uno stato all'altro (serve al
+percorso a stepper nel dettaglio contatto, vedi sopra). La tabella
+`lead_stato_storico` registra un record per ogni transizione reale, con la
+data vera del passaggio — mai indovinata: per le transizioni automatiche è la
+data dell'email (invio/risposta) che l'ha causata, non la data in cui il job
+è stato eseguito.
+
+Un'unica funzione (`leads.service.js: registraCambioStato`) scrive in questa
+tabella; ogni punto del codice che cambia `leads.stato` la richiama subito
+dopo — `upsertLeadForSentEmail` (→ `contattato`), `upsertLeadFromUpload` (→
+`da_contattare`, solo alla vera creazione del lead, mai su un ricaricamento),
+`applyReplyClassification` (→ `interessato`/`non_interessato`),
+`flag-no-response-leads.job.js` (→ `senza_risposta`), `updateLeadStato` (il
+cambio manuale da dettaglio contatto, es. → `acquisito`, marcato `origine:
+manuale`). Ignora silenziosamente le transizioni "a vuoto" (stesso stato
+dell'ultima già registrata), così una seconda risposta "interessato" non
+duplica la tappa.
+
 ## Setup — Frontend
 
 ```bash
@@ -254,12 +275,15 @@ L'app parte su `http://localhost:5173` e richiede il backend attivo su `http://l
   esplicitamente tra le 5 ma necessaria per non nascondere quei contatti. In "Senza risposta"
   è presente anche il pulsante per generare la bozza di richiamo per la zona filtrata
   (requisito #8, vedi sopra).
-- **Dettaglio contatto** (`/contatti/:id`) — storico email completo, richiami collegati,
-  avviso anti-duplicazione (requisito #2) se l'ultimo contatto risale a meno di 7 giorni,
-  cambio stato manuale. La timeline mostra, per ogni evento, il contenuto concreto e non solo
-  l'etichetta: l'oggetto reale per le email inviate, la sintesi in una riga generata da Claude
-  per le risposte ricevute (fallback all'oggetto grezzo per bounce/risposte automatiche, dove
-  non c'è sintesi).
+- **Dettaglio contatto** (`/contatti/:id`) — in cima, un percorso a stepper orizzontale (es.
+  "Da contattare (12/07) → Contattato (15/07) → Interessato (18/07) → Acquisito (22/07)")
+  con le date REALI dei passaggi di questo contatto specifico, non solo lo stato attuale —
+  vedi "Percorso stato" sotto. Poi: storico email completo, richiami collegati, avviso
+  anti-duplicazione (requisito #2) se l'ultimo contatto risale a meno di 7 giorni, cambio
+  stato manuale. La timeline dello storico email mostra, per ogni evento, il contenuto
+  concreto e non solo l'etichetta: l'oggetto reale per le email inviate, la sintesi in una
+  riga generata da Claude per le risposte ricevute (fallback all'oggetto grezzo per
+  bounce/risposte automatiche, dove non c'è sintesi).
 - **Dashboard** (`/dashboard`) — andamento mensile con grafico + tabella dati.
 - **Richiami** (`/richiami`) — task da evadere (`follow_up`), con l'indicatore dei richiami
   del giorno sempre visibile nella barra di navigazione e l'assegnazione ("Prendi in carico")

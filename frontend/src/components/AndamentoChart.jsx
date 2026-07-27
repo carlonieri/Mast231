@@ -1,9 +1,12 @@
 import { useRef, useState } from 'react';
 
+// Un'unica famiglia di blu (nessun altro colore accento): rampa chiaro→scuro
+// validata come sequenziale mono-tinta, non categorica — l'identità delle
+// serie non si affida al colore da solo, la legenda è sempre visibile.
 const SERIE = [
-  { chiave: 'email_inviate', etichetta: 'Email inviate', colore: 'var(--series-1)' },
-  { chiave: 'risposte_ricevute', etichetta: 'Risposte ricevute', colore: 'var(--series-2)' },
-  { chiave: 'interessati', etichetta: 'Interessati', colore: 'var(--series-3)' },
+  { chiave: 'email_inviate', etichetta: 'Email inviate', colore: 'var(--accent)' },
+  { chiave: 'risposte_ricevute', etichetta: 'Risposte ricevute', colore: 'var(--accent-light)' },
+  { chiave: 'interessati', etichetta: 'Interessati', colore: 'var(--accent-dark)' },
 ];
 
 const WIDTH = 640;

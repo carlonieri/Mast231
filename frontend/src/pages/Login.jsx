@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import Footer from '../components/Footer';
 
 function Login() {
   const { login } = useAuth();
@@ -61,6 +62,7 @@ function Login() {
           {inCorso ? 'Accesso…' : 'Accedi'}
         </button>
       </form>
+      <Footer />
     </div>
   );
 }
