@@ -131,6 +131,23 @@ export async function caricaLista(formData) {
   return res.json();
 }
 
+// Recupera un caricamento 'in_revisione' per riprendere la revisione (es.
+// dopo un refresh della pagina, prima che qualcuno abbia confermato).
+export function getRevisioneCaricamento(id) {
+  return request(`/api/caricamenti/${id}/revisione`);
+}
+
+// Conferma la revisione manuale di un caricamento 'in_revisione': decisioni è
+// un array di { email, azione: 'tieni' | 'escludi' }, una per ogni indirizzo
+// segnalato. Solo dopo questa chiamata vengono creati i lead e generate le
+// bozze Outlook.
+export function confermaCaricamento(id, decisioni) {
+  return request(`/api/caricamenti/${id}/conferma`, {
+    method: 'POST',
+    body: JSON.stringify({ decisioni }),
+  });
+}
+
 export function chiediAssistente(messaggi) {
   return request('/api/assistente/chat', {
     method: 'POST',

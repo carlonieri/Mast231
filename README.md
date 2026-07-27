@@ -138,15 +138,35 @@ npm run job:flag-no-response
 
 `POST /api/caricamenti` (multipart/form-data, campo `file`: .xlsx o .csv, campi
 opzionali `citta`/`regione` come default per le righe senza quei valori). Valida
-ogni riga (solo email obbligatoria), deduplica gli indirizzi ripetuti nel file,
-controlla ognuno contro la blacklist (`esclusioni`) e crea/aggiorna i lead
-puliti (`caricamenti.dettagli` registra il riepilogo completo: righe totali,
-non valide, duplicati, esclusi con motivo, puliti). Ogni 150 destinatari puliti
-(configurabile via `UPLOAD_BATCH_SIZE`) genera automaticamente una bozza email
-reale nella cartella Bozze della casella (via IMAP, unica scrittura del
+ogni riga (solo email obbligatoria) e deduplica gli indirizzi ripetuti nel file
+(non è una questione di giudizio, solo un errore di dati: resta un controllo
+automatico). Controlla poi ognuno contro la blacklist (`esclusioni`) — l'unica
+esclusione automatica senza eccezioni, per motivi legali/privacy.
+
+Per tutti gli altri casi il sistema non decide da solo: un indirizzo che
+corrisponde a un lead già `acquisito`, `interessato`, `non_interessato` o
+`contattato` di recente (entro `FOLLOWUP_DAYS_THRESHOLD` giorni) non viene né
+incluso né scartato in automatico, ma segnalato per revisione manuale
+(`stato: 'in_revisione'` nella risposta, con l'elenco `segnalati`: email, stato
+attuale, da quanto tempo, motivo). Se non c'è nulla da segnalare, il
+caricamento si finalizza subito come prima. Altrimenti l'operatore conferma con
+`POST /api/caricamenti/:id/conferma` (`{ decisioni: [{ email, azione: 'tieni'
+| 'escludi' }, ...] }`, una voce per ogni indirizzo segnalato): solo a quel
+punto vengono creati/aggiornati i lead della lista finale (puliti automatici +
+confermati) e generate le bozze. `caricamenti.dettagli` registra il riepilogo
+completo con conteggi distinti: righe totali, non valide, duplicati nel file,
+esclusi per blacklist, puliti automatici, segnalati per revisione (con quanti
+tenuti e quanti esclusi dall'operatore). Ogni 150 destinatari della lista
+finale (configurabile via `UPLOAD_BATCH_SIZE`) genera automaticamente una bozza
+email reale nella cartella Bozze della casella (via IMAP, unica scrittura del
 progetto oltre alla lettura — mai un invio) con i destinatari già inseriti nel
 campo A: oggetto e corpo restano vuoti, il testo resta sempre dell'operatore.
-`GET /api/caricamenti` restituisce lo storico degli ultimi caricamenti.
+`GET /api/caricamenti` restituisce lo storico degli ultimi caricamenti (incluso
+lo stato `in_revisione`/`completato`). Se una revisione resta interrotta (es.
+refresh della pagina prima di confermare, o da un altro operatore/dispositivo),
+`GET /api/caricamenti/:id/revisione` la recupera (stessa forma della risposta
+di POST /, 404 se l'id non esiste, 409 se non è più in attesa di revisione) —
+nel frontend, "Riprendi" nella tabella storico.
 
 ### Richiamo "senza risposta" per zona
 

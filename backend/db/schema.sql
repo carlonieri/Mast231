@@ -25,7 +25,18 @@ CREATE TABLE caricamenti (
   numero_record INTEGER,
   caricato_da TEXT,              -- operatore che ha effettuato il caricamento
   note TEXT,
-  dettagli JSONB,                -- riepilogo strutturato: validazione, dedup, blacklist, bozze generate
+  -- 'in_revisione': ci sono indirizzi segnalati (lead già acquisiti/interessati/
+  -- non interessati/contattati di recente) in attesa che l'operatore decida,
+  -- indirizzo per indirizzo, se tenerli o escluderli — nessun lead viene
+  -- creato/aggiornato né bozza generata finché non si conferma (vedi
+  -- caricamento.service.js). 'completato': caricamento finalizzato.
+  stato TEXT NOT NULL DEFAULT 'completato' CHECK (stato IN ('in_revisione', 'completato')),
+  dettagli JSONB,                -- riepilogo strutturato: validazione, dedup, blacklist, revisione, bozze generate
+  -- Righe pulite automatiche e segnalate, salvate qui SOLO mentre stato =
+  -- 'in_revisione', per poter finalizzare il caricamento (POST .../conferma)
+  -- senza richiedere di ricaricare il file una seconda volta. Azzerato alla
+  -- finalizzazione: non deve mai comparire nello storico esposto al frontend.
+  revisione_pendente JSONB,
   data_caricamento TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
