@@ -49,25 +49,14 @@
   --transition-fast: 120ms ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme='light'])) {
-    color-scheme: dark;
-    --surface-1: #14171c;
-    --page-plane: #0b0d10;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c9d2;
-    --text-muted: #8a93a1;
-    --gridline: #262b33;
-    --baseline: #3a4048;
-    --border: rgba(255, 255, 255, 0.1);
-
-    --accent: #3f86d6;
-    --accent-light: #7cb6f0;
-    --accent-dark: #1e6bc4;
-    --accent-tint: rgba(63, 134, 214, 0.18);
-  }
-}
-
+/* Niente attivazione automatica in base al tema del sistema operativo: è un
+   prodotto a marchio AnchorAI, deve presentarsi sempre uguale (sfondo
+   bianco/chiaro) a titolare e operatori a prescindere dalle impostazioni del
+   loro PC — non solo una preferenza estetica: senza un selettore nell'app,
+   un tema scuro automatico sarebbe stato per loro l'unico aspetto mai visto,
+   mai testato, indistinguibile da un bug. Il blocco sotto resta pronto per
+   un eventuale interruttore manuale futuro, ma oggi nessuna parte dell'app
+   imposta l'attributo data-theme, quindi resta inerte. */
 :root[data-theme='dark'] {
   color-scheme: dark;
   --surface-1: #14171c;
