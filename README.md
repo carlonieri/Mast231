@@ -266,10 +266,24 @@ L'app parte su `http://localhost:5173` e richiede il backend attivo su `http://l
 ### Sistema di design
 
 Brand AnchorAI (azienda che ha sviluppato il gestionale per conto di Mast231 — il
-nome "Mast231" resta il titolo del prodotto, invariato). Pensato per uno strumento
-usato ore ogni giorno, non per una landing page: poche scelte, sempre uguali,
-niente decorazioni. Tutti i token sono in `frontend/src/styles.css`.
+nome "Mast231" resta il titolo del prodotto, invariato, in evidenza in cima al menu
+laterale). Pensato per uno strumento usato ore ogni giorno, non per una landing page:
+poche scelte, sempre uguali, niente decorazioni. Tutti i token sono in
+`frontend/src/styles.css`.
 
+- **Navigazione**: menu laterale fisso (`.app-sidebar`, componente `Layout.jsx`) al
+  posto della vecchia barra orizzontale piatta — le voci sono raggruppate per
+  priorità/frequenza d'uso ("Oggi": Richiami del giorno + Carica lista; "Contatti": le
+  6 sezioni lead; "Analisi": Dashboard; "Amministrazione", solo titolare: Gestione
+  utenti, in fondo al menu, separata visivamente perché di uso raro), non un elenco
+  di tab tutte allo stesso livello. Il badge "Richiami del giorno" è ora una card in
+  evidenza in cima al menu (numero grande, `.sidebar-card-richiami-numero`) invece di
+  un piccolo badge accanto al nome sezione.
+- **Marchio AnchorAI**: componente condiviso `MarchioAnchorAI.jsx` (icona ancora
+  ritagliata da `frontend/src/assets/anchorai-icon.png` + testo "by AnchorAI"),
+  visibile subito sotto il titolo "Mast231" nel menu laterale e sulla card di login —
+  non più relegato in un footer a fondo pagina, ma comunque visivamente secondario
+  (dimensione e peso inferiori al titolo "Mast231").
 - **Colore**: neutri antracite/bianco (`--text-primary`, `--surface-1`, ecc.) + un'unica
   famiglia di blu come accento (`--accent`/`--accent-light`/`--accent-dark`/`--accent-tint`),
   campionata dal logo e validata per contrasto — nessun altro colore decorativo. Il grafico
@@ -277,22 +291,31 @@ niente decorazioni. Tutti i token sono in `frontend/src/styles.css`.
   riservati a segnali funzionali (errori, badge critici/avviso) — mai usati come accento.
 - **Tipografia**: due font self-hosted (`@fontsource`, nessuna richiesta a CDN esterni —
   coerente con un'app che tratta dati di compliance/GDPR). **IBM Plex Sans** (600/700) per
-  titoli e intestazioni — `--font-heading`. **Public Sans** (400/500/600) per corpo del
+  titoli e intestazioni — `--font-heading`, con un salto di dimensione netto rispetto al
+  corpo del testo (`h1` 2rem, `h2` 1.25rem) così titoli e contenuto si distinguono a colpo
+  d'occhio, non solo ispezionando il codice. **Public Sans** (400/500/600) per corpo del
   testo, tabelle e dati — `--font-body`, scelto per leggere molta informazione densa a lungo
-  senza affaticare.
+  senza affaticare. I dati numerici rilevanti (es. "Richiami del giorno") usano una
+  dimensione molto più grande (1.8–2rem, peso 700) del testo circostante, non un numero
+  qualunque in mezzo al resto.
 - **Forma**: scala di 3 raggi (`--radius-sm` 6px per controlli, `--radius-md` 10px per
   contenitori, `--radius-pill` per i soli badge di stato) e scala di 6 spaziature
   (`--space-1`…`--space-6`, 4→32px) — nessun valore "a occhio" nel resto del foglio di
   stile. Ombre riservate a ciò che galleggia sopra la pagina (il widget assistente): mai
   su card, tabelle o pulsanti.
-- **Pulsanti**: gerarchia a tre livelli. `.btn-primario` (sfondo blu pieno) per l'unica
-  azione principale di ogni schermata (Accedi, Carica, Crea account, Genera bozza
-  richiamo…). `.btn-secondario` (bordo blu, sfondo trasparente) per azioni rilevanti ma
-  non uniche — attualmente non in uso, disponibile per casi futuri. `.btn` semplice
+- **Pulsanti**: gerarchia a tre livelli, non solo di colore ma anche di dimensione — un
+  pulsante primario è fisicamente più grande, per distinguersi a colpo d'occhio da quelli
+  secondari. `.btn-primario` (sfondo blu pieno, padding maggiorato) per l'unica azione
+  principale di ogni schermata (Accedi, Carica, Crea account, Genera bozza richiamo…).
+  `.btn-secondario` (bordo blu, sfondo trasparente) per azioni rilevanti ma non uniche —
+  attualmente non in uso, disponibile per casi futuri. `.btn` semplice, più compatto
   (bordo neutro) per azioni di contorno (Esporta Excel, Segna evaso, Disattiva…).
 - **Stati di interazione**: bordo blu + alone leggero al focus su input/select (prima
   assente — affidato al default del browser), tinta blu leggera all'hover sulle righe
-  delle tabelle, transizione di 120ms su hover/focus dei controlli.
+  delle tabelle, transizione di 120ms su hover/focus dei controlli. Nessun tema scuro
+  automatico legato al sistema operativo: l'app ha un unico aspetto (chiaro), scelto
+  esplicitamente, per evitare che cambi senza controllo in base alle impostazioni di chi
+  la apre.
 
 ### Sezioni del gestionale
 
@@ -317,7 +340,7 @@ niente decorazioni. Tutti i token sono in `frontend/src/styles.css`.
   bounce/risposte automatiche, dove non c'è sintesi).
 - **Dashboard** (`/dashboard`) — andamento mensile con grafico + tabella dati.
 - **Richiami** (`/richiami`) — task da evadere (`follow_up`), con l'indicatore dei richiami
-  del giorno sempre visibile nella barra di navigazione e l'assegnazione ("Prendi in carico")
+  del giorno sempre visibile in cima al menu laterale e l'assegnazione ("Prendi in carico")
   a chi è loggato.
 - **Gestione utenti** (`/utenti`, solo titolare) — crea/disattiva account, resetta password.
 - **Login** (`/login`) — tutte le rotte sopra richiedono una sessione valida, altrimenti

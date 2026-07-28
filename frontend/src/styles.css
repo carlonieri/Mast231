@@ -89,49 +89,135 @@ body {
 h1,
 h2,
 h3,
-.app-titolo {
+.sidebar-titolo {
   font-family: var(--font-heading);
 }
 
 .app-shell {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
 }
 
-.app-header {
+/* Sidebar: fissa, sempre visibile, contiene marchio + tutta la navigazione
+   (raggruppata per priorità d'uso, non un elenco piatto) + utente/logout.
+   Non progettata per schermi stretti/mobile — non richiesto. */
+.app-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
   background: var(--surface-1);
-  border-bottom: 1px solid var(--border);
-  padding: var(--space-3) var(--space-5);
+  border-right: 1px solid var(--border);
+  padding: var(--space-5) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-6);
 }
 
-.app-titolo-riga {
+.sidebar-brand {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: 1px;
 }
 
-.app-titolo {
+.sidebar-titolo {
+  font-size: 1.5rem;
   font-weight: 700;
-  font-size: 1.1rem;
 }
 
-.app-utente {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.sidebar-sottotitolo {
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
-.app-nav {
+.marchio-anchorai {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-1);
+  margin-top: var(--space-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.marchio-anchorai-logo {
+  height: 16px;
+  width: auto;
+}
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.sidebar-gruppo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sidebar-gruppo-titolo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+.sidebar-gruppo-admin {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-utente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* "Richiami del giorno": prima un puntino rosso su un tab, ora un numero
+   grande — è un dato che deve risaltare, non un'etichetta come le altre. */
+.sidebar-card-richiami {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--accent-tint);
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
+.sidebar-card-richiami:hover {
+  background: var(--accent-tint);
+  filter: brightness(0.97);
+}
+
+.sidebar-card-richiami-etichetta {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.sidebar-card-richiami-numero {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+  font-variant-numeric: tabular-nums;
 }
 
 .nav-link {
@@ -139,8 +225,9 @@ h3,
   text-decoration: none;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  display: inline-flex;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
   align-items: center;
   gap: var(--space-1);
   transition: background var(--transition-fast), color var(--transition-fast);
@@ -158,24 +245,17 @@ h3,
 .nav-link-attivo {
   background: var(--accent);
   color: #ffffff;
+  font-weight: 600;
 }
 
 .nav-link-attivo:hover {
   background: var(--accent);
 }
 
-.badge-richiami {
-  background: var(--status-critical);
-  color: #ffffff;
-  border-radius: var(--radius-pill);
-  font-size: 0.7rem;
-  padding: 1px 7px;
-  font-weight: 700;
-}
-
 .app-main {
   flex: 1;
-  padding: var(--space-5);
+  min-width: 0;
+  padding: var(--space-6) var(--space-6);
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
@@ -191,19 +271,20 @@ h3,
 }
 
 h1 {
-  font-size: 1.4rem;
+  font-size: 2rem;
   font-weight: 700;
   margin: 0;
 }
 
 h2 {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 600;
   margin: var(--space-6) 0 var(--space-2);
 }
 
 .filtri-riga {
   display: flex;
+  align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-4);
   flex-wrap: wrap;
@@ -311,10 +392,16 @@ select:focus-visible {
 /* Gerarchia a tre livelli: primario (un'unica azione per schermata),
    secondario (azione rilevante ma non l'unica), terziario (il default
    .btn sopra — azioni di contorno: Esporta Excel, Segna evaso, Disattiva). */
+/* Non solo colore: anche dimensione — un pulsante primario è fisicamente
+   più grande, non solo diverso di tinta, per farlo distinguere a colpo
+   d'occhio da quelli terziari (Esporta Excel, Segna evaso, Disattiva…). */
 .btn-primario {
   background: var(--accent);
   border-color: var(--accent);
   color: #ffffff;
+  padding: var(--space-3) var(--space-5);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .btn-primario:hover {
@@ -547,7 +634,7 @@ select:focus-visible {
 }
 
 .stat-tile-valore {
-  font-size: 1.6rem;
+  font-size: 2rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -770,7 +857,12 @@ select:focus-visible {
 
 .scheda-login h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+}
+
+.marchio-anchorai-login {
+  margin-top: 0;
+  margin-bottom: var(--space-1);
 }
 
 .scheda-login label {
@@ -799,18 +891,3 @@ select:focus-visible {
   width: 140px;
 }
 
-.app-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-5);
-  color: var(--text-muted);
-  font-size: 0.76rem;
-}
-
-.app-footer-logo {
-  height: 15px;
-  width: auto;
-  opacity: 0.82;
-}

@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { getFollowUp } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import AssistenteChat from './AssistenteChat';
-import Footer from './Footer';
+import MarchioAnchorAI from './MarchioAnchorAI';
 
 const SEZIONI = [
   { path: '/acquisiti', label: 'Acquisiti' },
@@ -36,43 +36,65 @@ function Layout() {
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <div className="app-titolo-riga">
-          <div className="app-titolo">Mast231 — Gestionale email</div>
-          <div className="app-utente">
-            <span>{utente?.nome}</span>
-            <button type="button" className="btn btn-piccolo" onClick={gestisciLogout}>
-              Esci
-            </button>
-          </div>
+      <aside className="app-sidebar">
+        <div className="sidebar-brand">
+          <div className="sidebar-titolo">Mast231</div>
+          <div className="sidebar-sottotitolo">Gestionale email</div>
+          <MarchioAnchorAI />
         </div>
-        <nav className="app-nav">
-          {SEZIONI.map((s) => (
-            <NavLink key={s.path} to={s.path} className={linkClasse}>
-              {s.label}
+
+        {/* Raggruppate per priorità/frequenza d'uso, non un elenco piatto:
+            cosa fare oggi, poi i contatti (lavoro quotidiano), poi analisi
+            periodica, infine amministrazione (rara, solo titolare). */}
+        <nav className="sidebar-nav">
+          <div className="sidebar-gruppo">
+            <div className="sidebar-gruppo-titolo">Oggi</div>
+            <NavLink to="/richiami" className="sidebar-card-richiami">
+              <span className="sidebar-card-richiami-etichetta">Richiami del giorno</span>
+              <span className="sidebar-card-richiami-numero">{richiamiOggi ?? '—'}</span>
             </NavLink>
-          ))}
-          <NavLink to="/carica-lista" className={linkClasse}>
-            Carica lista
-          </NavLink>
-          <NavLink to="/dashboard" className={linkClasse}>
-            Dashboard
-          </NavLink>
-          <NavLink to="/richiami" className={linkClasse}>
-            Richiami del giorno
-            {richiamiOggi !== null && richiamiOggi > 0 && <span className="badge-richiami">{richiamiOggi}</span>}
-          </NavLink>
+            <NavLink to="/carica-lista" className={linkClasse}>
+              Carica lista
+            </NavLink>
+          </div>
+
+          <div className="sidebar-gruppo">
+            <div className="sidebar-gruppo-titolo">Contatti</div>
+            {SEZIONI.map((s) => (
+              <NavLink key={s.path} to={s.path} className={linkClasse}>
+                {s.label}
+              </NavLink>
+            ))}
+          </div>
+
+          <div className="sidebar-gruppo">
+            <div className="sidebar-gruppo-titolo">Analisi</div>
+            <NavLink to="/dashboard" className={linkClasse}>
+              Dashboard
+            </NavLink>
+          </div>
+
           {utente?.ruolo === 'titolare' && (
-            <NavLink to="/utenti" className={linkClasse}>
-              Gestione utenti
-            </NavLink>
+            <div className="sidebar-gruppo sidebar-gruppo-admin">
+              <div className="sidebar-gruppo-titolo">Amministrazione</div>
+              <NavLink to="/utenti" className={linkClasse}>
+                Gestione utenti
+              </NavLink>
+            </div>
           )}
         </nav>
-      </header>
+
+        <div className="sidebar-utente">
+          <span>{utente?.nome}</span>
+          <button type="button" className="btn btn-piccolo" onClick={gestisciLogout}>
+            Esci
+          </button>
+        </div>
+      </aside>
+
       <main className="app-main">
         <Outlet />
       </main>
-      <Footer />
       <AssistenteChat />
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import Footer from '../components/Footer';
+import MarchioAnchorAI from '../components/MarchioAnchorAI';
 
 function Login() {
   const { login } = useAuth();
@@ -32,6 +32,7 @@ function Login() {
     <div className="pagina-login">
       <form className="scheda-login" onSubmit={gestisciSubmit}>
         <h1>Mast231</h1>
+        <MarchioAnchorAI className="marchio-anchorai-login" />
         <p className="testo-muted">Accedi al gestionale email.</p>
 
         <label htmlFor="login-email">Email</label>
@@ -62,7 +63,6 @@ function Login() {
           {inCorso ? 'Accesso…' : 'Accedi'}
         </button>
       </form>
-      <Footer />
     </div>
   );
 }
