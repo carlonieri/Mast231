@@ -61,21 +61,24 @@ function valutaLeadEsistente(leadEsistente, sogliaRecenteGiorni) {
 // fonte dati più aggiornata), altrimenti mantiene quelli già salvati. Lo
 // stato non viene mai toccato qui: un ricaricamento non deve far regredire
 // un lead già in uno stato più avanzato (interessato, senza_risposta, ecc.).
-// SELECT preliminare (non un ON CONFLICT unico) apposta: solo così sappiamo
-// con certezza se questo è un lead nuovo, per registrare 'da_contattare' nel
-// percorso stato SOLO alla vera creazione — mai su un ricaricamento, che qui
-// non tocca lo stato.
+// INSERT ... ON CONFLICT DO NOTHING (non SELECT-poi-INSERT separati): il
+// tentativo di inserimento è atomico, quindi due caricamenti che condividono
+// un indirizzo nuovo e finalizzano quasi in contemporanea non vanno più in
+// conflitto sul vincolo UNIQUE di leads.email — chi perde la corsa trova
+// semplicemente 0 righe inserite e passa all'UPDATE sotto, invece di andare
+// in eccezione. 'da_contattare' viene registrato nel percorso stato SOLO
+// quando l'INSERT ha davvero inserito una riga — mai su un ricaricamento.
 async function upsertLeadFromUpload({ email, nome, citta, regione, caricamentoId }) {
-  const esistente = await getPool().query('SELECT id FROM leads WHERE email = $1', [email]);
+  const inserito = await getPool().query(
+    `INSERT INTO leads (email, nome, citta, regione, caricamento_id)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (email) DO NOTHING
+     RETURNING id, created_at`,
+    [email, nome, citta, regione, caricamentoId]
+  );
 
-  if (esistente.rows.length === 0) {
-    const result = await getPool().query(
-      `INSERT INTO leads (email, nome, citta, regione, caricamento_id)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, created_at`,
-      [email, nome, citta, regione, caricamentoId]
-    );
-    const { id: leadId, created_at: dataCreazione } = result.rows[0];
+  if (inserito.rows.length > 0) {
+    const { id: leadId, created_at: dataCreazione } = inserito.rows[0];
     await registraCambioStato({ leadId, stato: 'da_contattare', data: dataCreazione, origine: 'automatico' });
     return;
   }
@@ -87,8 +90,8 @@ async function upsertLeadFromUpload({ email, nome, citta, regione, caricamentoId
        regione = COALESCE($3, regione),
        caricamento_id = $4,
        updated_at = now()
-     WHERE id = $5`,
-    [nome, citta, regione, caricamentoId, esistente.rows[0].id]
+     WHERE email = $5`,
+    [nome, citta, regione, caricamentoId, email]
   );
 }
 
@@ -96,39 +99,56 @@ async function upsertLeadFromUpload({ email, nome, citta, regione, caricamentoId
 // confermati dall'operatore) e generazione delle bozze IMAP scaglionate.
 // Unico punto in cui il caricamento tocca davvero il DB e la casella email:
 // eseguito subito se non ci sono segnalati, altrimenti solo dopo conferma.
+// Se qualcosa fallisce a metà (es. IMAP irraggiungibile durante la
+// generazione bozze, dopo che alcuni lead sono già stati creati), il
+// caricamento va marcato 'errore' — MAI lasciato/segnato 'completato' se la
+// finalizzazione non è davvero riuscita fino in fondo.
 async function finalizzaCaricamento({ caricamentoId, pulitiAutomatici, confermati, rimossi, datiComuni, soglia }) {
   const listaFinale = [...pulitiAutomatici, ...confermati];
 
-  for (const riga of listaFinale) {
-    // eslint-disable-next-line no-await-in-loop
-    await upsertLeadFromUpload({ ...riga, caricamentoId });
+  try {
+    for (const riga of listaFinale) {
+      // eslint-disable-next-line no-await-in-loop
+      await upsertLeadFromUpload({ ...riga, caricamentoId });
+    }
+
+    const batches = chunk(listaFinale, soglia);
+    const bozzeGenerate = await generateDraftsForBatches(batches);
+
+    const dettagli = {
+      ...datiComuni,
+      stato: 'completato',
+      puliti_automatici: pulitiAutomatici.length,
+      segnalati_revisione: {
+        totale: confermati.length + rimossi.length,
+        confermati: confermati.map((r) => ({ email: r.email, stato_lead: r.stato_lead, motivo: r.motivo })),
+        rimossi: rimossi.map((r) => ({ email: r.email, stato_lead: r.stato_lead, motivo: r.motivo })),
+      },
+      bozze: bozzeGenerate.map((b) => ({
+        numero_batch: b.numeroBatch,
+        destinatari: b.destinatari.length,
+        uid_bozza_imap: b.uid,
+      })),
+    };
+
+    await getPool().query(
+      'UPDATE caricamenti SET dettagli = $1, stato = $2, revisione_pendente = NULL WHERE id = $3',
+      [JSON.stringify(dettagli), 'completato', caricamentoId]
+    );
+
+    return { caricamento_id: caricamentoId, ...dettagli };
+  } catch (err) {
+    const dettagliErrore = {
+      ...datiComuni,
+      stato: 'errore',
+      errore: err.message || 'Errore imprevisto durante la finalizzazione del caricamento.',
+    };
+    await getPool().query(
+      'UPDATE caricamenti SET dettagli = $1, stato = $2, revisione_pendente = NULL WHERE id = $3',
+      [JSON.stringify(dettagliErrore), 'errore', caricamentoId]
+    );
+    throw err;
   }
-
-  const batches = chunk(listaFinale, soglia);
-  const bozzeGenerate = await generateDraftsForBatches(batches);
-
-  const dettagli = {
-    ...datiComuni,
-    stato: 'completato',
-    puliti_automatici: pulitiAutomatici.length,
-    segnalati_revisione: {
-      totale: confermati.length + rimossi.length,
-      confermati: confermati.map((r) => ({ email: r.email, stato_lead: r.stato_lead, motivo: r.motivo })),
-      rimossi: rimossi.map((r) => ({ email: r.email, stato_lead: r.stato_lead, motivo: r.motivo })),
-    },
-    bozze: bozzeGenerate.map((b) => ({
-      numero_batch: b.numeroBatch,
-      destinatari: b.destinatari.length,
-      uid_bozza_imap: b.uid,
-    })),
-  };
-
-  await getPool().query(
-    'UPDATE caricamenti SET dettagli = $1, stato = $2, revisione_pendente = NULL WHERE id = $3',
-    [JSON.stringify(dettagli), 'completato', caricamentoId]
-  );
-
-  return { caricamento_id: caricamentoId, ...dettagli };
 }
 
 // Carica lista giornaliera: valida, deduplica nel file e controlla la
@@ -213,7 +233,7 @@ async function processUpload({ buffer, fonte, citta, regione, caricatoDa, batchS
     `INSERT INTO caricamenti (fonte, citta, regione, numero_record, caricato_da, stato)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id`,
-    [fonte, citta || null, regione || null, totaleRighe, caricatoDa || null, segnalati.length > 0 ? 'in_revisione' : 'completato']
+    [fonte, citta || null, regione || null, totaleRighe, caricatoDa || null, segnalati.length > 0 ? 'in_revisione' : 'in_elaborazione']
   );
   const caricamentoId = caricamentoResult.rows[0].id;
 

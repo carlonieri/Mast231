@@ -94,25 +94,54 @@ async function runSubmitSentEmailBatchJob({ limit = 50 } = {}) {
     }
   }
 
-  let batchId = null;
-  if (daInviare.length > 0) {
-    const batch = await submitCategorizeSentEmailBatch(daInviare);
-    batchId = batch.id;
+  // Riserva atomica per message_id (UNIQUE su categorizzazioni_batch.message_id,
+  // batch_id ancora NULL) prima di sottomettere qualunque cosa a Claude: se
+  // questo job si sovrappone a un'altra esecuzione che sta processando le
+  // stesse email (stessa Posta Inviata letta due volte prima che la prima
+  // corsa finisca), solo una delle due riesce a riservare ogni message_id —
+  // l'altra lo salta, evitando un doppio invio alla Batch API (costo doppio).
+  const riservati = [];
+  for (const voce of daInviare) {
+    // eslint-disable-next-line no-await-in-loop
+    const esito = await getPool().query(
+      `INSERT INTO categorizzazioni_batch (custom_id, batch_id, message_id)
+       VALUES ($1, NULL, $2)
+       ON CONFLICT (message_id) DO NOTHING
+       RETURNING id`,
+      [voce.customId, voce.messageId]
+    );
+    if (esito.rowCount > 0) {
+      riservati.push({ ...voce, rigaId: esito.rows[0].id });
+    }
+  }
 
-    for (const voce of daInviare) {
-      // eslint-disable-next-line no-await-in-loop
-      await getPool().query(
-        `INSERT INTO categorizzazioni_batch (custom_id, batch_id, message_id) VALUES ($1, $2, $3)`,
-        [voce.customId, batchId, voce.messageId]
-      );
+  let batchId = null;
+  if (riservati.length > 0) {
+    try {
+      const batch = await submitCategorizeSentEmailBatch(riservati);
+      batchId = batch.id;
+
+      for (const voce of riservati) {
+        // eslint-disable-next-line no-await-in-loop
+        await getPool().query(`UPDATE categorizzazioni_batch SET batch_id = $1 WHERE id = $2`, [batchId, voce.rigaId]);
+      }
+    } catch (err) {
+      // Il batch non è mai stato sottomesso a Claude: libera le righe
+      // riservate così un run successivo può riprovare, invece di lasciarle
+      // bloccate per sempre con batch_id NULL (e quel message_id mai più
+      // riprovabile, essendo message_id UNIQUE).
+      await getPool().query(`DELETE FROM categorizzazioni_batch WHERE id = ANY($1::int[])`, [
+        riservati.map((v) => v.rigaId),
+      ]);
+      throw err;
     }
   }
 
   console.log(
     `Log sent emails (invio batch): ${totaleProcessati} nuovi eventi, ${totaleSaltati} già presenti, ` +
-      `${daInviare.length} messaggi inviati alla Batch API${batchId ? ` (batch ${batchId})` : ''}.`
+      `${riservati.length} messaggi inviati alla Batch API${batchId ? ` (batch ${batchId})` : ''}.`
   );
-  return { totaleProcessati, totaleSaltati, inviatiAllaBatch: daInviare.length, batchId };
+  return { totaleProcessati, totaleSaltati, inviatiAllaBatch: riservati.length, batchId };
 }
 
 module.exports = { runSubmitSentEmailBatchJob };

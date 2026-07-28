@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import MarchioAnchorAI from '../components/MarchioAnchorAI';
 
 function Login() {
-  const { login } = useAuth();
+  const { login, sessioneScaduta } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -57,6 +57,9 @@ function Login() {
           disabled={inCorso}
         />
 
+        {!errore && sessioneScaduta && (
+          <p className="testo-errore">Sessione scaduta: accedi di nuovo per continuare.</p>
+        )}
         {errore && <p className="testo-errore">{errore}</p>}
 
         <button type="submit" className="btn btn-primario" disabled={inCorso}>

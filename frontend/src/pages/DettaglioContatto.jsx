@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getLeadDetail, updateLeadStato } from '../api/client';
 import BadgeStato from '../components/BadgeStato';
@@ -15,24 +15,43 @@ function DettaglioContatto() {
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState(null);
   const [salvataggio, setSalvataggio] = useState(false);
+  // Guardia contro risposte "stale" (cambio rapido di contatto) e per non far
+  // sparire l'intera scheda dietro "Caricamento…" a ogni cambio stato — solo
+  // il primo caricamento di un contatto è bloccante, un refresh successivo
+  // (dopo aver cambiato stato) aggiorna i dati sotto senza far flashare la
+  // pagina.
+  const richiestaInCorsoRef = useRef(0);
 
-  function carica() {
-    setCaricamento(true);
+  function carica({ mostraCaricamento = true } = {}) {
+    const idRichiesta = ++richiestaInCorsoRef.current;
+    if (mostraCaricamento) setCaricamento(true);
     setErrore(null);
     getLeadDetail(id)
-      .then(setDettaglio)
-      .catch((e) => setErrore(e.message))
-      .finally(() => setCaricamento(false));
+      .then((d) => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setDettaglio(d);
+      })
+      .catch((e) => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setErrore(e.message);
+      })
+      .finally(() => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setCaricamento(false);
+      });
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(carica, [id]);
+  useEffect(() => {
+    setDettaglio(null);
+    carica();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   async function cambiaStato(nuovoStato) {
     setSalvataggio(true);
     try {
       await updateLeadStato(id, nuovoStato);
-      carica();
+      carica({ mostraCaricamento: false });
     } catch (e) {
       setErrore(e.message);
     } finally {
@@ -45,6 +64,8 @@ function DettaglioContatto() {
   if (!dettaglio) return <p>Contatto non trovato.</p>;
 
   const giorni = giorniDa(dettaglio.ultima_data_contatto);
+  const storico = dettaglio.storico || [];
+  const richiami = dettaglio.richiami || [];
 
   return (
     <section>
@@ -108,8 +129,8 @@ function DettaglioContatto() {
         </select>
       </div>
 
-      <h2>Storico email ({dettaglio.storico.length})</h2>
-      {dettaglio.storico.length === 0 ? (
+      <h2>Storico email ({storico.length})</h2>
+      {storico.length === 0 ? (
         <p className="testo-muted">
           Nessuna email registrata per questo contatto: comparirà qui non appena verrà inviata o ricevuta
           un'email tracciata.
@@ -126,7 +147,7 @@ function DettaglioContatto() {
             </tr>
           </thead>
           <tbody>
-            {dettaglio.storico.map((e) => (
+            {storico.map((e) => (
               <tr key={e.id}>
                 <td>{formatDataOra(e.data)}</td>
                 <td>{e.direzione === 'inviata' ? 'Inviata' : 'Ricevuta'}</td>
@@ -139,12 +160,12 @@ function DettaglioContatto() {
         </table>
       )}
 
-      <h2>Richiami ({dettaglio.richiami.length})</h2>
-      {dettaglio.richiami.length === 0 ? (
+      <h2>Richiami ({richiami.length})</h2>
+      {richiami.length === 0 ? (
         <p className="testo-muted">Nessun richiamo pianificato per questo contatto al momento.</p>
       ) : (
         <ul className="lista-richiami">
-          {dettaglio.richiami.map((r) => (
+          {richiami.map((r) => (
             <li key={r.id}>
               <strong>{formatData(r.data_suggerita)}</strong> — {r.motivo}{' '}
               <span className={`badge ${r.stato === 'fatto' ? 'badge-buono' : 'badge-avviso'}`}>

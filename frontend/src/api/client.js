@@ -19,6 +19,15 @@ async function estraiMessaggioErrore(res) {
   return message;
 }
 
+// Evento globale emesso quando una richiesta autenticata risponde 401 (sessione
+// scaduta mentre l'app era aperta) — ascoltato da AuthContext, che azzera
+// l'utente e fa scattare il redirect a /login già previsto da RotaProtetta.
+// Esclude deliberatamente /api/auth/me (il controllo sessione al primo
+// caricamento: un 401 lì significa solo "non ancora loggato", non "sessione
+// scaduta") e /api/auth/login (credenziali sbagliate, gestito localmente
+// dalla pagina di login) tramite l'opzione skipAuthRedirect.
+const EVENTO_SESSIONE_SCADUTA = 'mast231:sessione-scaduta';
+
 async function request(path, options = {}) {
   let res;
   try {
@@ -31,6 +40,9 @@ async function request(path, options = {}) {
     throw new Error('Impossibile contattare il server. Verifica di essere connesso e riprova.');
   }
   if (!res.ok) {
+    if (res.status === 401 && !options.skipAuthRedirect) {
+      window.dispatchEvent(new Event(EVENTO_SESSIONE_SCADUTA));
+    }
     const errore = new Error(await estraiMessaggioErrore(res));
     errore.status = res.status;
     throw errore;
@@ -49,7 +61,11 @@ function buildQuery(params) {
 }
 
 export function login(email, password) {
-  return request('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  return request('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+    skipAuthRedirect: true,
+  });
 }
 
 export function logout() {
@@ -57,8 +73,10 @@ export function logout() {
 }
 
 export function getUtenteCorrente() {
-  return request('/api/auth/me');
+  return request('/api/auth/me', { skipAuthRedirect: true });
 }
+
+export { EVENTO_SESSIONE_SCADUTA };
 
 export function getUtenti() {
   return request('/api/utenti');
@@ -104,12 +122,23 @@ export function getFollowUp({ oggi } = {}) {
   return request(`/api/follow-up${buildQuery({ oggi: oggi ? 'true' : undefined })}`);
 }
 
-export function markFollowUpDone(id) {
-  return request(`/api/follow-up/${id}`, { method: 'PATCH' });
+// Emesso dopo ogni azione che può cambiare il numero di "Richiami del
+// giorno" — ascoltato da Layout per tenere aggiornata la card in sidebar
+// senza bisogno di un F5 (prima restava ferma al valore del primo caricamento
+// per tutta la sessione, dato che la sidebar non viene mai rimontata durante
+// la navigazione).
+export const EVENTO_RICHIAMI_AGGIORNATI = 'mast231:richiami-aggiornati';
+
+export async function markFollowUpDone(id) {
+  const risultato = await request(`/api/follow-up/${id}`, { method: 'PATCH' });
+  window.dispatchEvent(new Event(EVENTO_RICHIAMI_AGGIORNATI));
+  return risultato;
 }
 
-export function prendiInCaricoFollowUp(id) {
-  return request(`/api/follow-up/${id}/prendi-in-carico`, { method: 'PATCH' });
+export async function prendiInCaricoFollowUp(id) {
+  const risultato = await request(`/api/follow-up/${id}/prendi-in-carico`, { method: 'PATCH' });
+  window.dispatchEvent(new Event(EVENTO_RICHIAMI_AGGIORNATI));
+  return risultato;
 }
 
 export function getDashboard() {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getLeads, getFiltriLead, exportLeadUrl, generaRichiamoZona } from '../api/client';
 import BadgeStato from '../components/BadgeStato';
@@ -14,6 +14,15 @@ function RichiamoZona({ citta, regione }) {
 
   const zonaScelta = Boolean(citta || regione);
   const etichettaZona = [citta, regione].filter(Boolean).join(' / ') || 'tutte le zone';
+
+  // L'esito resta legato alla zona per cui è stata generata: se l'operatore
+  // cambia filtro senza rigenerare, il messaggio precedente ("generata 1
+  // bozza con 12 destinatari") non deve restare visibile come se si
+  // riferisse alla nuova zona.
+  useEffect(() => {
+    setEsito(null);
+    setErrore(null);
+  }, [citta, regione]);
 
   async function genera() {
     setInCorso(true);
@@ -70,6 +79,10 @@ function SezioneLead({ titolo, stati, mostraRichiamoZona = false }) {
   const [opzioniFiltro, setOpzioniFiltro] = useState({ citta: [], regione: [] });
   const [citta, setCitta] = useState('');
   const [regione, setRegione] = useState('');
+  // Guardia contro risposte "stale": se l'operatore cambia rapidamente
+  // sezione/filtro, una richiesta più lenta partita per una combinazione
+  // precedente non deve sovrascrivere il risultato di una più recente.
+  const richiestaInCorsoRef = useRef(0);
 
   useEffect(() => {
     getFiltriLead()
@@ -78,12 +91,22 @@ function SezioneLead({ titolo, stati, mostraRichiamoZona = false }) {
   }, []);
 
   useEffect(() => {
+    const idRichiesta = ++richiestaInCorsoRef.current;
     setCaricamento(true);
     setErrore(null);
     getLeads({ stato: statoParam, citta, regione })
-      .then(setLeads)
-      .catch((e) => setErrore(e.message))
-      .finally(() => setCaricamento(false));
+      .then((r) => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setLeads(r);
+      })
+      .catch((e) => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setErrore(e.message);
+      })
+      .finally(() => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setCaricamento(false);
+      });
   }, [statoParam, citta, regione]);
 
   return (

@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Richiami from './pages/Richiami';
 import CaricaLista from './pages/CaricaLista';
 import GestioneUtenti from './pages/GestioneUtenti';
+import NotFound from './pages/NotFound';
 
 // Le 5 sezioni della spec (requisito funzionale #6) + "Non interessati", non
 // esplicitamente elencata tra le 5 ma necessaria per non nascondere quei
@@ -51,6 +52,7 @@ function App() {
             <Route element={<RotaProtetta soloTitolare />}>
               <Route path="/utenti" element={<GestioneUtenti />} />
             </Route>
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Route>
       </Routes>

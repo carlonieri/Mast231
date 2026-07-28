@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getFollowUp, markFollowUpDone, prendiInCaricoFollowUp } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -10,34 +10,59 @@ function Richiami() {
   const [richiami, setRichiami] = useState([]);
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState(null);
+  // Id del richiamo con un'azione (Segna evaso/Prendi in carico) in corso —
+  // disabilita i pulsanti di quella riga per evitare un doppio click che
+  // scatenerebbe due richieste concorrenti sullo stesso richiamo.
+  const [azioneInCorso, setAzioneInCorso] = useState(null);
+
+  // Guardia contro risposte "stale": se l'operatore cambia rapidamente il
+  // filtro "solo oggi", una richiesta più lenta partita per il valore
+  // precedente non deve sovrascrivere il risultato di una più recente.
+  const richiestaInCorsoRef = useRef(0);
 
   function carica() {
+    const idRichiesta = ++richiestaInCorsoRef.current;
     setCaricamento(true);
     setErrore(null);
     getFollowUp({ oggi: soloOggi })
-      .then(setRichiami)
-      .catch((e) => setErrore(e.message))
-      .finally(() => setCaricamento(false));
+      .then((r) => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setRichiami(r);
+      })
+      .catch((e) => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setErrore(e.message);
+      })
+      .finally(() => {
+        if (idRichiesta !== richiestaInCorsoRef.current) return;
+        setCaricamento(false);
+      });
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(carica, [soloOggi]);
 
   async function segnaEvaso(id) {
+    setAzioneInCorso(id);
     try {
       await markFollowUpDone(id);
       carica();
     } catch (e) {
       setErrore(e.message);
+    } finally {
+      setAzioneInCorso(null);
     }
   }
 
   async function prendiInCarico(id) {
+    setAzioneInCorso(id);
     try {
       await prendiInCaricoFollowUp(id);
       carica();
     } catch (e) {
       setErrore(e.message);
+    } finally {
+      setAzioneInCorso(null);
     }
   }
 
@@ -97,12 +122,22 @@ function Richiami() {
                 </td>
                 <td className="azioni-richiamo">
                   {!r.assegnato_a && (
-                    <button type="button" className="btn btn-piccolo" onClick={() => prendiInCarico(r.id)}>
+                    <button
+                      type="button"
+                      className="btn btn-piccolo"
+                      onClick={() => prendiInCarico(r.id)}
+                      disabled={azioneInCorso === r.id}
+                    >
                       Prendi in carico
                     </button>
                   )}
-                  <button type="button" className="btn btn-piccolo" onClick={() => segnaEvaso(r.id)}>
-                    Segna evaso
+                  <button
+                    type="button"
+                    className="btn btn-piccolo"
+                    onClick={() => segnaEvaso(r.id)}
+                    disabled={azioneInCorso === r.id}
+                  >
+                    {azioneInCorso === r.id ? 'Un attimo…' : 'Segna evaso'}
                   </button>
                 </td>
               </tr>

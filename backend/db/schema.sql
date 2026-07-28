@@ -29,8 +29,12 @@ CREATE TABLE caricamenti (
   -- non interessati/contattati di recente) in attesa che l'operatore decida,
   -- indirizzo per indirizzo, se tenerli o escluderli — nessun lead viene
   -- creato/aggiornato né bozza generata finché non si conferma (vedi
-  -- caricamento.service.js). 'completato': caricamento finalizzato.
-  stato TEXT NOT NULL DEFAULT 'completato' CHECK (stato IN ('in_revisione', 'completato')),
+  -- caricamento.service.js). 'in_elaborazione': transitorio, tra la creazione
+  -- del record e la vera finalizzazione (creazione lead + bozze) quando non
+  -- ci sono indirizzi da segnalare. 'completato': finalizzato con successo.
+  -- 'errore': la finalizzazione è fallita a metà (es. IMAP non raggiungibile) —
+  -- il record NON deve mai risultare 'completato' se non lo è davvero.
+  stato TEXT NOT NULL DEFAULT 'completato' CHECK (stato IN ('in_elaborazione', 'in_revisione', 'completato', 'errore')),
   dettagli JSONB,                -- riepilogo strutturato: validazione, dedup, blacklist, revisione, bozze generate
   -- Righe pulite automatiche e segnalate, salvate qui SOLO mentre stato =
   -- 'in_revisione', per poter finalizzare il caricamento (POST .../conferma)
@@ -157,7 +161,11 @@ CREATE UNIQUE INDEX idx_email_events_message_lead ON email_events(message_id, le
 CREATE TABLE categorizzazioni_batch (
   id SERIAL PRIMARY KEY,
   custom_id TEXT NOT NULL,       -- custom_id della richiesta nel batch Claude
-  batch_id TEXT NOT NULL,        -- id del batch Claude (msgbatch_...)
+  -- Nullable: la riga viene inserita per "riservare" il message_id (vedi
+  -- submit-sent-email-batch.job.js) PRIMA di conoscere l'id del batch Claude,
+  -- così due esecuzioni sovrapposte del job non possono sottomettere due
+  -- volte la stessa email — l'UNIQUE su message_id sotto fa da lock.
+  batch_id TEXT,                 -- id del batch Claude (msgbatch_...)
   message_id TEXT NOT NULL,      -- Message-ID IMAP del messaggio da categorizzare
   stato TEXT NOT NULL DEFAULT 'in_attesa' CHECK (stato IN ('in_attesa', 'completato', 'errore')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -165,7 +173,7 @@ CREATE TABLE categorizzazioni_batch (
 );
 CREATE UNIQUE INDEX idx_categorizzazioni_batch_custom_id ON categorizzazioni_batch(custom_id);
 CREATE INDEX idx_categorizzazioni_batch_stato ON categorizzazioni_batch(stato);
-CREATE INDEX idx_categorizzazioni_batch_message_id ON categorizzazioni_batch(message_id);
+CREATE UNIQUE INDEX idx_categorizzazioni_batch_message_id ON categorizzazioni_batch(message_id);
 
 -- Nota: l'archiviazione periodica degli eventi più vecchi di ~12 mesi su lead
 -- chiusi/esclusi (in tabella di archivio separata) è prevista dalla spec ma non

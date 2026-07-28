@@ -9,6 +9,13 @@ const ETICHETTE_MOTIVO = {
   contattato_recente: 'Contattato di recente',
 };
 
+const ETICHETTE_STATO_CARICAMENTO = {
+  in_revisione: 'In attesa di revisione',
+  in_elaborazione: 'In elaborazione…',
+  completato: 'Completato',
+  errore: 'Errore',
+};
+
 function CaricaLista() {
   const fileInputRef = useRef(null);
   const [citta, setCitta] = useState('');
@@ -330,7 +337,15 @@ function CaricaLista() {
                 <td>{c.numero_record ?? '—'}</td>
                 <td>{c.dettagli?.puliti_automatici ?? '—'}</td>
                 <td>{c.dettagli?.bozze?.length ?? '—'}</td>
-                <td>{c.stato === 'in_revisione' ? 'In attesa di revisione' : 'Completato'}</td>
+                <td>
+                  {ETICHETTE_STATO_CARICAMENTO[c.stato] || c.stato}
+                  {c.stato === 'errore' && c.dettagli?.errore && (
+                    <>
+                      <br />
+                      <span className="testo-muted">{c.dettagli.errore}</span>
+                    </>
+                  )}
+                </td>
                 <td>
                   {c.stato === 'in_revisione' && !revisione && (
                     <button type="button" className="btn btn-piccolo" onClick={() => gestisciRiprendi(c.id)}>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { getFollowUp } from '../api/client';
+import { EVENTO_RICHIAMI_AGGIORNATI, getFollowUp } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import AssistenteChat from './AssistenteChat';
 import MarchioAnchorAI from './MarchioAnchorAI';
@@ -24,9 +24,18 @@ function Layout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    getFollowUp({ oggi: true })
-      .then((r) => setRichiamiOggi(r.length))
-      .catch(() => setRichiamiOggi(null));
+    function carica() {
+      getFollowUp({ oggi: true })
+        .then((r) => setRichiamiOggi(r.length))
+        .catch(() => setRichiamiOggi(null));
+    }
+    // La sidebar resta montata per tutta la sessione (non si ricarica
+    // navigando tra le pagine): senza questo listener il numero restava
+    // fermo al valore del primo caricamento anche dopo aver evaso o preso in
+    // carico un richiamo da /richiami.
+    carica();
+    window.addEventListener(EVENTO_RICHIAMI_AGGIORNATI, carica);
+    return () => window.removeEventListener(EVENTO_RICHIAMI_AGGIORNATI, carica);
   }, []);
 
   async function gestisciLogout() {

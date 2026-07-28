@@ -19,23 +19,24 @@ async function runFlagNoResponseLeadsJob({ soglia } = {}) {
 
   // Solo i lead "contattato" (in attesa di risposta) la cui ultima email
   // risale a più della soglia: chi è già interessato/non_interessato/escluso
-  // o già segnato senza_risposta non viene toccato di nuovo.
+  // o già segnato senza_risposta non viene toccato di nuovo. UPDATE...RETURNING
+  // atomico (non SELECT-poi-UPDATE separati): se due esecuzioni di questo job
+  // si sovrappongono, la seconda ri-valuta il WHERE dopo che la prima ha già
+  // spostato il lead a 'senza_risposta' e quindi non lo trova più — niente
+  // più richiami duplicati per lo stesso lead.
   const result = await getPool().query(
-    `SELECT id, email
-     FROM leads
+    `UPDATE leads
+     SET stato = 'senza_risposta', updated_at = now()
      WHERE stato = 'contattato'
        AND ultima_data_contatto IS NOT NULL
-       AND ultima_data_contatto <= now() - ($1::text || ' days')::interval`,
+       AND ultima_data_contatto <= now() - ($1::text || ' days')::interval
+     RETURNING id, email`,
     [soglianGiorni]
   );
 
   let aggiornati = 0;
   for (const lead of result.rows) {
     const dataTransizione = new Date();
-    // eslint-disable-next-line no-await-in-loop
-    await getPool().query(`UPDATE leads SET stato = 'senza_risposta', updated_at = now() WHERE id = $1`, [
-      lead.id,
-    ]);
     // eslint-disable-next-line no-await-in-loop
     await registraCambioStato({ leadId: lead.id, stato: 'senza_risposta', data: dataTransizione, origine: 'automatico' });
     // eslint-disable-next-line no-await-in-loop
